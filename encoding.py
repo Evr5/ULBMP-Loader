@@ -199,8 +199,6 @@ class Decoder:
         header_size = int.from_bytes(content[6:8], 'little')
         header = content[: header_size]
 
-        print(header)
-
         if header[:5] != bytes([0x55, 0x4c, 0x42, 0x4d, 0x50]):
             raise ValueError("Il y a eu un problème lors de la lecture de l'image:\n'Mauvais format: il manque"
                              " 'ULBMP' dans l'en-tête")
@@ -210,7 +208,6 @@ class Decoder:
         number_pixel = height*width
 
         pixels_bytes = content[header_size:]
-        print("len de bytes : ", len(pixels_bytes))
         pixels = Decoder.decode_pixels(version, header, pixels_bytes, number_pixel)
         return Image(width, height, pixels)
 
