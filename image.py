@@ -1,0 +1,53 @@
+"""
+NOM : Van Ruyskensvelde
+PRÉNOM : Ethan
+SECTION : B1-INF0
+MATRICULE : 000589640
+"""
+from pixel import Pixel
+
+class Image:
+    def __init__(self, width, height, pixels):
+        if width*height != len(pixels):
+            raise ValueError("La longueur et largeur sont différent du nombre de pixels")
+
+        if not isinstance(pixels, list):
+            raise ValueError("Pixel doit être une liste de pixels")
+
+        for pixel in pixels:
+            if not isinstance(pixel, Pixel):
+                raise ValueError("Le contenu de la liste pixels doit être des objets Pixel")
+        self.width = width
+        self.height = height
+        self.pixels = pixels
+
+    def __str__(self):
+        """
+        Affiche la classe avec la largeur, hauteur et le contenu de la liste pixel
+        """
+        repr = ""
+        # Ajouter les pixels à l'endroit où ils se trouvent dans l'image
+        for y in range(self.height):
+            for x in range(self.width):
+                repr += str(self[x, y]) + " "
+            repr += "\n"
+        return repr
+
+    def __getitem__(self, pos):
+        x, y = pos
+        if not (0 <= x < self.width) or not (0 <= y < self.height):
+            raise IndexError("Position hors limite")
+        return self.pixels[y * self.width + x]
+
+    def __setitem__(self, pos, pix):
+        x, y = pos
+        if not (0 <= x < self.width) or not (0 <= y < self.height):
+            raise IndexError("Position hors limite")
+        self.pixels[y * self.width + x] = pix
+
+    def __eq__(self, other):
+        if not isinstance(other, Image):
+            res = False
+        else:
+            res = (self.width, self.height, self.pixels) == (other.width, other.height, other.pixels)
+        return res
