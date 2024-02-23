@@ -14,6 +14,9 @@ class Encoder:
         self.version = version
         depth = kwargs.get('depth')
         rle = kwargs.get('rle')
+        if not depth or rle:
+            raise ValueError("Il manque la profondeur et ou la spécification de l'encodage rle")
+        
         self.depth = depth
         self.rle = rle
         self.checkError()
@@ -96,6 +99,7 @@ class Encoder:
                 header += bytes(sum(palette, []))
             len_header = len(header) + 2  # longueur du header + les 2 bytes de la taille du header à écrire
             header[6:6] = len_header.to_bytes(2, 'little')
+        print(header)
         return header
 
     def depth1(self, palette):
