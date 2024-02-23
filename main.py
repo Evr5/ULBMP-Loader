@@ -16,3 +16,12 @@ if __name__ == "__main__":
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+
+print("test")
+
+
+"""
+test pour voir si je peux uploader ?!
+"""
+
+print("test de upload")
