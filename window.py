@@ -9,7 +9,7 @@ MATRICULE : 000589640
 from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QErrorMessage, QInputDialog, QMessageBox, \
     QVBoxLayout, QWidget, QHBoxLayout
 from PySide6.QtGui import QPixmap, QImage, QColor, QIcon
-from encoding import *
+from encoding import Encoder, Decoder
 
 
 class MainWindow(QMainWindow):
