@@ -1,1 +1,0 @@
-print("aller on prie")
