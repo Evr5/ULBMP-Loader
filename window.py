@@ -77,7 +77,7 @@ class MainWindow(QMainWindow):
                 for x in range(self.image.width):
                     pixel = self.image[x, y]
                     unique_colors.add((pixel.red, pixel.green, pixel.blue))
-            self.color_count_label.setText(f"Nombre de  : {len(unique_colors)}")
+            self.color_count_label.setText(f"Nombre de coulers : {len(unique_colors)}")
         else:
             self.color_count_label.setText("")
 

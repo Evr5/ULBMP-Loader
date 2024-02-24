@@ -17,9 +17,15 @@ encoder = Encoder(image, 3, depth=8, rle=True)
 
 encoder.save_to("C:/Users/ethan/Downloads/rle_true.ulbmp")
 """
+from pixel import Pixel
 
-header = bytearray([0x55, 0x4c, 0x42, 0x4d, 0x50])
-test = bytes([int(True)])
-header += test
-print(header)
 
+pixel = []
+
+for i in range (400*200):
+    pixel.append(Pixel(0, 0, 0))
+    pixel.append(Pixel(255, 0, 0))
+    pixel.append(Pixel(0, 0, 255))
+    pixel.append(Pixel(0, 255, 0))
+    
+print(len(pixel))

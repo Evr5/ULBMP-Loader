@@ -255,50 +255,24 @@ class Decoder:
         for i in range(0, len(palette), 3):
             colors.append([int(palette[i]), int(palette[i + 1]), int(palette[i + 2])])
 
-        if depth == 1:
-            pixels = Decoder.depth1(pixels_bytes, pixels, number_pixel, colors)
-        elif depth == 2:
-            pixels = Decoder.depth2(pixels_bytes, pixels, number_pixel, colors)
-        elif depth == 4:
-            pixels = Decoder.depth4(pixels_bytes, pixels, number_pixel, colors)
+        if depth in [1, 2, 4]:
+            pixels = Decoder.depth124(pixels_bytes, pixels, number_pixel, depth, colors)
         elif depth == 8:
             pixels = Decoder.depth8(pixels_bytes, pixels, rle, colors)
         elif depth == 24:
             Decoder.depth24(pixels_bytes, pixels, rle)
-
+            
         return pixels
 
-    def depth1(pixels_bytes, pixels, number_pixel, colors):
+    def depth124(pixels_bytes, pixels, number_pixel, depth, colors):
         bits = ''
         for i in pixels_bytes:
             bits += format(int(i), '08b')
         index = 0
-        while len(pixels) < number_pixel and index < len(bits):
-            bit = bits[index]
-            pixels.append(Pixel(colors[int(bit)][0], colors[int(bit)][1], colors[int(bit)][2]))
-            index += 1
-        return pixels
-
-    def depth2(pixels_bytes, pixels, number_pixel, colors):
-        bits = ''
-        for i in pixels_bytes:
-            bits += format(int(i), '08b')
-        index = 0
-        while index < len(bits) - 1 and len(pixels) < number_pixel:
-            valeur = int(bits[index:index + 2], 2)
+        while len(pixels) < number_pixel and index < len(bits) - (depth - 1):
+            valeur = int(bits[index:index + depth], 2)
             pixels.append(Pixel(colors[valeur][0], colors[valeur][1], colors[valeur][2]))
-            index += 2
-        return pixels
-
-    def depth4(pixels_bytes, pixels, number_pixel, colors):
-        bits = ''
-        for i in pixels_bytes:
-            bits += format(int(i), '08b')
-        index = 0
-        while index < len(bits) - 3 and len(pixels) < number_pixel:
-            valeur = int(bits[index:index + 4], 2)
-            pixels.append(Pixel(colors[valeur][0], colors[valeur][1], colors[valeur][2]))
-            index += 4
+            index += depth
         return pixels
 
     def depth8(pixels_bytes, pixels, rle, colors):
@@ -321,3 +295,17 @@ class Decoder:
             Decoder.version1(pixels_bytes, pixels)
         else:
             Decoder.version2(pixels_bytes, pixels)
+
+
+"""
+pixel = []
+
+for i in range (400*200):
+    pixel.append(Pixel(0, 0, 0))
+    pixel.append(Pixel(255, 0, 0))
+    pixel.append(Pixel(0, 0, 255))
+    pixel.append(Pixel(0, 255, 0))
+
+image = Image(800, 400, pixel)
+
+Encoder(image, 3, depth=2, rle=False).save_to("C:/Users/ethan/Downloads/depth2.ulbmp")"""
