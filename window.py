@@ -23,6 +23,8 @@ class MainWindow(QMainWindow):
         self.load_button = QPushButton("Charger une image", self)
         self.save_button = QPushButton("Enregistrer l'image", self)
         self.save_button.setEnabled(False)
+        self.color_count_label = QLabel(self)
+
 
         self.load_button.clicked.connect(self.load_image)
         self.save_button.clicked.connect(self.save_image)
@@ -34,6 +36,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
         layout.addLayout(buttons_layout)
         layout.addWidget(self.image_label)
+        layout.addWidget(self.color_count_label)
 
         central_widget = QWidget()
         central_widget.setLayout(layout)
@@ -46,6 +49,7 @@ class MainWindow(QMainWindow):
             try:
                 self.image = Decoder.load_from(filename)
                 self.display_image()
+                self.update_color_count(filename)
                 self.adjustSize()
                 self.save_button.setEnabled(True)
             except Exception as e:
@@ -64,6 +68,18 @@ class MainWindow(QMainWindow):
 
         pixmap = QPixmap.fromImage(image)
         self.image_label.setPixmap(pixmap)
+
+    def update_color_count(self, filename):
+        content = Decoder.fileContent(filename)
+        if Decoder.getVersion(content) == 3:
+            unique_colors = set()
+            for y in range(self.image.height):
+                for x in range(self.image.width):
+                    pixel = self.image[x, y]
+                    unique_colors.add((pixel.red, pixel.green, pixel.blue))
+            self.color_count_label.setText(f"Nombre de  : {len(unique_colors)}")
+        else:
+            self.color_count_label.setText("")
 
     def save_image(self):
         options = ["Version 1.0", "Version 2.0", "Version 3.0"]

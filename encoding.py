@@ -199,10 +199,8 @@ class Decoder:
         """
         Charge l'image depuis son emplacement pour créer un objet Image qui contient des objets Pixel
         """
-        with open(path, 'rb') as file:
-            content = file.read()
-
-        version = int(content[5])
+        content = Decoder.fileContent(path)
+        version = Decoder.getVersion(content)
         header_size = int.from_bytes(content[6:8], 'little')
         header = content[: header_size]
 
@@ -217,6 +215,15 @@ class Decoder:
         pixels_bytes = content[header_size:]
         pixels = Decoder.decode_pixels(version, header, pixels_bytes, number_pixel)
         return Image(width, height, pixels)
+    
+    def fileContent(path):
+        with open(path, 'rb') as file:
+            content = file.read()
+        return content
+    
+    def getVersion(content):
+        version = int(content[5])
+        return version
 
     def decode_pixels(version, header, pixels_bytes, number_pixel):
         pixels = []
@@ -314,12 +321,3 @@ class Decoder:
             Decoder.version1(pixels_bytes, pixels)
         else:
             Decoder.version2(pixels_bytes, pixels)
-
-pixel = []
-for i in range(720*460):
-    pixel.append(Pixel(0, 0, 0))
-
-image = Image(720, 460, pixel)
-
-encoder = Encoder(image, 3, depth=1, rle=False)
-encoder.save_to("C:/Users/ethan/Downloads/errorcheck.ulbmp")
