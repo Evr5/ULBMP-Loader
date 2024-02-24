@@ -14,9 +14,6 @@ class Encoder:
         self.version = version
         depth = kwargs.get('depth')
         rle = kwargs.get('rle')
-        if not depth or rle:
-            raise ValueError("Il manque la profondeur et ou la spécification de l'encodage rle")
-        
         self.depth = depth
         self.rle = rle
         self.checkError()
@@ -27,6 +24,12 @@ class Encoder:
 
         if self.rle and self.depth in [1, 2, 4]:
             raise ValueError("L'encodage RLE n'est disponible que pour une profondeur de 8 ou 24")
+        
+        if self.version == 3:
+            if not self.depth:
+                raise ValueError("Il manque le choix de profondeur")
+            elif self.rle not in [True, False]:
+                raise ValueError("Le choix de l'encodage rle n'est pas spécifié")
 
     def save_to(self, path):
         header = bytearray([
@@ -311,3 +314,12 @@ class Decoder:
             Decoder.version1(pixels_bytes, pixels)
         else:
             Decoder.version2(pixels_bytes, pixels)
+
+pixel = []
+for i in range(720*460):
+    pixel.append(Pixel(0, 0, 0))
+
+image = Image(720, 460, pixel)
+
+encoder = Encoder(image, 3, depth=1, rle=False)
+encoder.save_to("C:/Users/ethan/Downloads/errorcheck.ulbmp")
