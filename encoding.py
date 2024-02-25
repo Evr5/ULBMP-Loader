@@ -198,7 +198,7 @@ class Decoder:
     def load_from(path):
         """
         Charge l'image depuis son emplacement pour créer un objet Image qui contient des objets Pixel
-        """
+        """        
         content = Decoder.fileContent(path)
         version = Decoder.getVersion(content)
         header_size = int.from_bytes(content[6:8], 'little')
@@ -249,31 +249,29 @@ class Decoder:
             i += 4
 
     def version3(header, pixels_bytes, pixels, number_pixel):
-        depth, rle, palette = header[12], bool(header[13]), header[14:]
-
+        depth_number, rle, palette = header[12], bool(header[13]), header[14:]
         colors = []
         for i in range(0, len(palette), 3):
             colors.append([int(palette[i]), int(palette[i + 1]), int(palette[i + 2])])
 
-        if depth in [1, 2, 4]:
-            pixels = Decoder.depth124(pixels_bytes, pixels, number_pixel, depth, colors)
-        elif depth == 8:
+        if depth_number in [1, 2, 4]:
+            pixels = Decoder.depth_1_to_4(pixels_bytes, pixels, number_pixel, depth_number, colors)
+        elif depth_number == 8:
             pixels = Decoder.depth8(pixels_bytes, pixels, rle, colors)
-        elif depth == 24:
+        elif depth_number == 24:
             Decoder.depth24(pixels_bytes, pixels, rle)
             
         return pixels
 
-    def depth124(pixels_bytes, pixels, number_pixel, depth, colors):
-        bits = ''
+    def depth_1_to_4(pixels_bytes, pixels, number_pixel, depth_number, colors):
+        bits_list = []
         for i in pixels_bytes:
-            bits += format(int(i), '08b')
+            bits_list.extend(format(int(i), '08b'))
         index = 0
-        while len(pixels) < number_pixel and index < len(bits) - (depth - 1):
-            valeur = int(bits[index:index + depth], 2)
+        while len(pixels) < number_pixel and index < len(bits_list) - (depth_number - 1):
+            valeur = int(''.join(bits_list[index:index + depth_number]), 2)
             pixels.append(Pixel(colors[valeur][0], colors[valeur][1], colors[valeur][2]))
-            index += depth
-        return pixels
+            index += depth_number
 
     def depth8(pixels_bytes, pixels, rle, colors):
         if not rle:
@@ -288,24 +286,9 @@ class Decoder:
                 for _ in range(count):
                     pixels.append(Pixel(colors[value_byte][0], colors[value_byte][1], colors[value_byte][2]))
                 i += 2
-        return pixels
 
     def depth24(pixels_bytes, pixels, rle):
         if not rle:
             Decoder.version1(pixels_bytes, pixels)
         else:
             Decoder.version2(pixels_bytes, pixels)
-
-
-"""
-pixel = []
-
-for i in range (400*200):
-    pixel.append(Pixel(0, 0, 0))
-    pixel.append(Pixel(255, 0, 0))
-    pixel.append(Pixel(0, 0, 255))
-    pixel.append(Pixel(0, 255, 0))
-
-image = Image(800, 400, pixel)
-
-Encoder(image, 3, depth=2, rle=False).save_to("C:/Users/ethan/Downloads/depth2.ulbmp")"""

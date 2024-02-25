@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QEr
     QVBoxLayout, QWidget, QHBoxLayout
 from PySide6.QtGui import QPixmap, QImage, QColor, QIcon
 from encoding import Encoder, Decoder
-
+import time
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -42,7 +42,7 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
-    def load_image(self):
+    def load_image(self):            
         file_dialog = QFileDialog()
         filename, _ = file_dialog.getOpenFileName(self, 'Ouvrir une image ULBMP')
         if filename:
@@ -55,7 +55,7 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 error_dialog = QErrorMessage()
                 error_dialog.showMessage(str(e))
-                error_dialog.exec()
+                error_dialog.exec()     
 
     def display_image(self):
         image = QImage(self.image.width, self.image.height, QImage.Format_RGB888)
