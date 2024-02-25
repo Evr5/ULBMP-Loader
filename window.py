@@ -25,7 +25,6 @@ class MainWindow(QMainWindow):
         self.save_button.setEnabled(False)
         self.color_count_label = QLabel(self)
 
-
         self.load_button.clicked.connect(self.load_image)
         self.save_button.clicked.connect(self.save_image)
 
@@ -51,12 +50,15 @@ class MainWindow(QMainWindow):
                 self.display_image()
                 self.update_color_count(filename)
                 self.save_button.setEnabled(True)
-                self.resize(200, 200)
+                # taille convenable pour que la taille de la fenêtre soit en fonction de la taille de l'image
+                if self.image.width > 300 and self.image.height > 100: 
+                    self.setFixedSize(self.image.width, self.image.height)
+                else:   # si la taille de l'image est trop petite que pour que la taille de la fenêtre soit en fonction de la taille de l'image
+                    self.setFixedSize(300, 100)
             except Exception as e:
                 error_dialog = QErrorMessage()
                 error_dialog.showMessage(str(e))
                 error_dialog.exec()    
-
 
     def display_image(self):
         image = QImage(self.image.width, self.image.height, QImage.Format_RGB888)
