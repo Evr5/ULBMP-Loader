@@ -57,8 +57,23 @@ def depth1(self, palette):
         return pixel_bytes
 """
 
-def depth1_2_4(self, palette):
+def depth1_2_4(self, palette, depth_version):
+    bin_format = "0"
+    bin_format += str(depth_version) + "b"
+    
     pixel_bits = ''
     pixel_bytes = bytearray()
     for pixel in self.image.pixels:
         pixel_index = palette.index([pixel.red, pixel.green, pixel.blue])
+        pixel_bits += str(format(pixel_index, bin_format))
+        while len(pixel_bits) >= 8:
+            byte_to_write = pixel_bits[:8]
+            pixel_bits = pixel_bits[8:]
+            pixel_bytes.append(int(byte_to_write, 2))
+            
+    # Si des bits restent à écrire à la fin
+    if pixel_bits:
+        remaining_bits = pixel_bits.ljust(8, '0')  # Remplir avec des zéros à droite
+        pixel_bytes.append(int(remaining_bits, 2))
+
+    return pixel_bytes
