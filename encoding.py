@@ -124,7 +124,7 @@ class Encoder:
     def depth8(self, palette):
         if not self.rle:
             pixel_bits = ''
-            pixel_bytes = bytes()
+            pixel_bytes = bytearray()
             for pixel in self.image.pixels:
                 pixel_bits += str(format(palette.index([pixel.red, pixel.green, pixel.blue]), '08b'))
                 if len(pixel_bits) == 8:
@@ -132,7 +132,7 @@ class Encoder:
                     pixel_bits = ''
 
         else:
-            pixel_bytes = bytes()
+            pixel_bytes = bytearray()
             count = 1
             for i in range(1, len(self.image.pixels)):
                 if self.image.pixels[i] == self.image.pixels[i - 1]:

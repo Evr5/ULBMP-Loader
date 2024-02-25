@@ -10,12 +10,12 @@ from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QEr
     QVBoxLayout, QWidget, QHBoxLayout
 from PySide6.QtGui import QPixmap, QImage, QColor, QIcon
 from encoding import Encoder, Decoder
-import time
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
+        
         self.setWindowTitle("ULBMP Loader")
         self.setWindowIcon(QIcon("icons/file.png"))
 
@@ -42,7 +42,7 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
-    def load_image(self):            
+    def load_image(self):         
         file_dialog = QFileDialog()
         filename, _ = file_dialog.getOpenFileName(self, 'Ouvrir une image ULBMP')
         if filename:
@@ -50,22 +50,21 @@ class MainWindow(QMainWindow):
                 self.image = Decoder.load_from(filename)
                 self.display_image()
                 self.update_color_count(filename)
-                self.adjustSize()
                 self.save_button.setEnabled(True)
+                self.resize(200, 200)
             except Exception as e:
                 error_dialog = QErrorMessage()
                 error_dialog.showMessage(str(e))
-                error_dialog.exec()     
+                error_dialog.exec()    
+
 
     def display_image(self):
         image = QImage(self.image.width, self.image.height, QImage.Format_RGB888)
-
         for y in range(self.image.height):
             for x in range(self.image.width):
                 pixel = self.image[x, y]
                 color = QColor(pixel.red, pixel.green, pixel.blue)
                 image.setPixelColor(x, y, color)
-
         pixmap = QPixmap.fromImage(image)
         self.image_label.setPixmap(pixmap)
 
