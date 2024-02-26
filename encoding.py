@@ -6,7 +6,6 @@ MATRICULE : 000589640
 """
 from pixel import Pixel
 from image import Image
-import time
 
 
 class Encoder:
@@ -33,7 +32,6 @@ class Encoder:
                 raise ValueError("Le choix de l'encodage rle n'est pas spécifié")
 
     def save_to(self, path):
-        start = time.time()
         header = bytearray([
             0x55, 0x4c, 0x42, 0x4d, 0x50,  # ULBMP en ASCII
             self.version,  # Version du format
@@ -54,9 +52,6 @@ class Encoder:
                 elif self.version == 2:
                     self.version2(file)
 
-        end = time.time()
-        print(f"Temps d'encodage : {end - start} secondes")
-
     def version1(self, file):
         for pixel in self.image.pixels:
             file.write(bytes([pixel.red, pixel.green, pixel.blue]))
@@ -74,20 +69,13 @@ class Encoder:
         file.write(bytes([same_pixel, current_pixel.red, current_pixel.green, current_pixel.blue]))
 
     def version3(self, path, header):
-        a = time.time()
         header = self.updateHeader(header)
-        b = time.time()
-        print(f"Temps de l'écriture du header : {b - a} secondes")
-
         with open(path, 'wb') as file:
             file.write(header)
             if self.depth == 24:
                 self.depth24(file)
             else:
-                c = time.time()
                 palette = self.palette()
-                d = time.time()
-                print(f"Temps de l'écriture du palette : {d - c} secondes")
                 if self.depth in [1, 2, 4]:
                     pixel_bytes = self.depth1_2_4(palette)
                 elif self.depth == 8:
@@ -133,15 +121,12 @@ class Encoder:
 
     def depth8(self, palette):
         if not self.rle:
-            g = time.time()
             pixel_bits = []
             pixel_bytes = bytearray()
             for pixel in self.image.pixels:
                 pixel_bits.extend(format(palette.index([pixel.red, pixel.green, pixel.blue]), '08b'))
                 pixel_bytes.append(int(''.join(pixel_bits), 2))
                 pixel_bits.clear()
-            h = time.time()
-            print(f"Temps pour depth : {h - g} secondes")
 
         else:
             """ A revoir !!!"""
@@ -174,8 +159,6 @@ class Decoder:
         """
         Charge l'image depuis son emplacement pour créer un objet Image qui contient des objets Pixel
         """     
-        start = time.time()
-
         content = Decoder.fileContent(path)
         version = Decoder.getVersion(content)
         header_size = int.from_bytes(content[6:8], 'little')
@@ -191,9 +174,6 @@ class Decoder:
 
         pixels_bytes = content[header_size:]
         pixels = Decoder.decode_pixels(version, header, pixels_bytes, number_pixel)
-
-        end = time.time()
-        print("Temps de chargement : ", end - start)
         return Image(width, height, pixels)
     
     def fileContent(path):
@@ -271,20 +251,3 @@ class Decoder:
             Decoder.version1(pixels_bytes, pixels)
         else:
             Decoder.version2(pixels_bytes, pixels)
-
-
-pixel = []
-
-for i in range (720*140):
-    pixel.append(Pixel(0, 0, 0))
-for i in range (720*120):
-    pixel.append(Pixel(255, 0, 0))
-for i in range (720*140):
-    pixel.append(Pixel(255, 240, 0))
-
-
-image = Image(720, 400, pixel)
-
-encode = Encoder(image, 3, depth = 2, rle = False)
-
-encode.save_to("C:/Users/ethan/Downloads/Germany.ulbmp")

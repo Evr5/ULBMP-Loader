@@ -24,15 +24,17 @@ For depth = 2
 Germany
 """
     pixel = []
-    for i in range (750*180):
-        pixel.append(Pixel(0, 0, 0))
-    for i in range (750*180):
-        pixel.append(Pixel(255, 0, 0))
-    for i in range (750*180):
-        pixel.append(Pixel(255, 255, 0))
 
-    image = Image(750, 540, pixel)
+    for i in range (720*140):
+        pixel.append(Pixel(0, 0, 0))
+    for i in range (720*120):
+        pixel.append(Pixel(255, 0, 0))
+    for i in range (720*140):
+        pixel.append(Pixel(255, 240, 0))
+
+
+    image = Image(720, 400, pixel)
 
     encode = Encoder(image, 3, depth = 2, rle = False)
 
-encode.save_to("C:/Users/ethan/Downloads/Germany.ulbmp")
+    encode.save_to("C:/Users/ethan/Downloads/Germany.ulbmp")

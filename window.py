@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QEr
     QVBoxLayout, QWidget, QHBoxLayout
 from PySide6.QtGui import QPixmap, QImage, QColor, QIcon
 from encoding import Encoder, Decoder
-import time
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -46,8 +46,6 @@ class MainWindow(QMainWindow):
         filename, _ = file_dialog.getOpenFileName(self, 'Ouvrir une image ULBMP')
         if filename:
             try:
-                start = time.time()
-
                 self.image = Decoder.load_from(filename)
                 self.update_color_count(filename)
                 self.save_button.setEnabled(True)
@@ -58,10 +56,6 @@ class MainWindow(QMainWindow):
                     self.setFixedSize(self.image.width, self.image.height)
                 else:   # si la taille de l'image est trop petite que pour que la taille de la fenêtre soit en fonction de la taille de l'image
                     self.setFixedSize(300, 100)
-
-                fin = time.time()
-                print(f"Temps pour load_image : {fin - start}")
-
             except Exception as e:
                 error_dialog = QErrorMessage()
                 error_dialog.showMessage(str(e))
