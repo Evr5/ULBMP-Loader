@@ -6,6 +6,7 @@ MATRICULE : 000589640
 """
 from pixel import Pixel
 from image import Image
+import time
 
 
 class Encoder:
@@ -157,7 +158,9 @@ class Decoder:
     def load_from(path):
         """
         Charge l'image depuis son emplacement pour créer un objet Image qui contient des objets Pixel
-        """        
+        """     
+        start = time.time()
+
         content = Decoder.fileContent(path)
         version = Decoder.getVersion(content)
         header_size = int.from_bytes(content[6:8], 'little')
@@ -173,6 +176,9 @@ class Decoder:
 
         pixels_bytes = content[header_size:]
         pixels = Decoder.decode_pixels(version, header, pixels_bytes, number_pixel)
+
+        end = time.time()
+        print("Temps de chargement : ", end - start)
         return Image(width, height, pixels)
     
     def fileContent(path):

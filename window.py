@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QEr
     QVBoxLayout, QWidget, QHBoxLayout
 from PySide6.QtGui import QPixmap, QImage, QColor, QIcon
 from encoding import Encoder, Decoder
-
+import time
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -47,9 +47,10 @@ class MainWindow(QMainWindow):
         if filename:
             try:
                 self.image = Decoder.load_from(filename)
-                self.display_image()
                 self.update_color_count(filename)
                 self.save_button.setEnabled(True)
+                pixmap = self.display_image()
+                self.image_label.setPixmap(pixmap)
                 # taille convenable pour que la taille de la fenêtre soit en fonction de la taille de l'image
                 if self.image.width > 300 and self.image.height > 100: 
                     self.setFixedSize(self.image.width, self.image.height)
@@ -61,14 +62,17 @@ class MainWindow(QMainWindow):
                 error_dialog.exec()    
 
     def display_image(self):
-        image = QImage(self.image.width, self.image.height, QImage.Format_RGB888)
-        for y in range(self.image.height):
-            for x in range(self.image.width):
-                pixel = self.image[x, y]
-                color = QColor(pixel.red, pixel.green, pixel.blue)
-                image.setPixelColor(x, y, color)
-        pixmap = QPixmap.fromImage(image)
-        self.image_label.setPixmap(pixmap)
+        début = time.time()
+
+        pixel_bytes = bytearray()
+        for pixel in self.image.pixels:
+            pixel_bytes.extend([pixel.red, pixel.green, pixel.blue])
+        q_image = QImage(pixel_bytes, self.image.width, self.image.height, QImage.Format_RGB888)
+
+        fin = time.time()
+        print("test est de : ", fin - début)
+
+        return QPixmap.fromImage(q_image)
 
     def update_color_count(self, filename):
         content = Decoder.fileContent(filename)
