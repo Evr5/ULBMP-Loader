@@ -8,6 +8,9 @@ from pixel import Pixel
 
 class Image:
     def __init__(self, width, height, pixels):
+        """
+        Initialisation de la classe Image
+        """
         if width*height != len(pixels):
             raise ValueError("La longueur et largeur sont différent du nombre de pixels")
 

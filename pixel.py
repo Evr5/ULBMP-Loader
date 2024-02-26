@@ -8,6 +8,9 @@ MATRICULE : 000589640
 
 class Pixel:
     def __init__(self, red, green, blue):
+        """
+        Initialisation de la classe Pixel.
+        """
         if not (0 <= red <= 255 and 0 <= green <= 255 and 0 <= blue <= 255):
             raise ValueError("Les valeurs RGB ne sont pas comprises entre 0 et 255")
         self.__red = red

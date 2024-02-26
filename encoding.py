@@ -10,6 +10,9 @@ from image import Image
 
 class Encoder:
     def __init__(self, img, version=1, **kwargs):
+        """
+        Initialisation de la classe Encoder.
+        """
         self.image = img
         self.version = version
         depth = kwargs.get('depth')
@@ -32,9 +35,12 @@ class Encoder:
                 raise ValueError("Le choix de l'encodage rle n'est pas spécifié")
 
     def save_to(self, path):
+        """
+        Encodage d'un fichier ULBMP au path spécifié.
+        """
         header = bytearray([
             0x55, 0x4c, 0x42, 0x4d, 0x50,  # ULBMP en ASCII
-            self.version,  # Version du format
+            self.version,
             *self.image.width.to_bytes(2, 'little'),  # Largeur de l'image en little-endian
             *self.image.height.to_bytes(2, 'little')  # Hauteur de l'image en little-endian
         ])
@@ -43,8 +49,10 @@ class Encoder:
             self.version3(path, header)
 
         else:
+            # Ajout de la taille du header dans le header
             header.insert(6, 0x0c)
             header.insert(7, 0x00)
+
             with open(path, 'wb') as file:
                 file.write(header)
                 if self.version == 1:
@@ -53,10 +61,17 @@ class Encoder:
                     self.version2(file)
 
     def version1(self, file):
+        """
+        Pour la version 1 de l'ULBMP, on écrit 3 bytes pour chaque pixel.
+        """
         for pixel in self.image.pixels:
             file.write(bytes([pixel.red, pixel.green, pixel.blue]))
 
     def version2(self, file):
+        """
+        Pour la version 2 de l'ULBMP, utilisation du RLE, on écrit 2 bytes pour les mêmes pixels : 
+        premier bytes pour le nombre de pixels qu'il y a, le deuxième bytes pour le pixel.
+        """
         current_pixel = self.image.pixels[0]
         same_pixel = 1
         for next_pixel in self.image.pixels[1:]:
@@ -69,7 +84,10 @@ class Encoder:
         file.write(bytes([same_pixel, current_pixel.red, current_pixel.green, current_pixel.blue]))
 
     def version3(self, path, header):
-        header = self.updateHeader(header)
+        """
+        Pour la version 3 de l'ULBMP, encodage spécifique au depth et RLE spécifié.
+        """
+        header = self.updateHeader(header)  # Ajout de la taille du header et de la palette
         with open(path, 'wb') as file:
             file.write(header)
             if self.depth == 24:
@@ -83,6 +101,9 @@ class Encoder:
                 file.write(pixel_bytes)
 
     def palette(self):
+        """
+        Création de la plalette en fonction des différentes couleurs rencontrées dans l'image.
+        """
         unique_colors = set()
         for pixel in self.image.pixels:
             unique_colors.add((pixel.red, pixel.green, pixel.blue))
@@ -90,6 +111,9 @@ class Encoder:
 
 
     def updateHeader(self, header):
+        """
+        Ajout de la taille du header et de la palette dans le header.
+        """
         header.extend((self.depth, self.rle))
         if self.depth in [1, 2, 4, 8]:
             palette = bytes(sum(self.palette(), []))
@@ -99,6 +123,9 @@ class Encoder:
         return header
 
     def depth1_2_4(self, palette):
+        """
+        Encodage pour les depth 1, 2 et 4 qui n'auront jamais de RLE.
+        """
         bin_format = "0"
         bin_format += str(self.depth) + "b"
         
@@ -120,6 +147,9 @@ class Encoder:
         return pixel_bytes
 
     def depth8(self, palette):
+        """
+        Encodage pour depth 8 avec ou sans RLE.
+        """
         if not self.rle:
             pixel_bits = []
             pixel_bytes = bytearray()
@@ -148,6 +178,10 @@ class Encoder:
         return pixel_bytes
 
     def depth24(self, file):
+        """
+        Encodage pour depth 24 avec au sans RLE. Comme c'est le même principe que la version 1 ou 2,
+        utilisation de la fonction d'encodage version2 pour RLE, sinon version1.
+        """
         if self.rle:
             self.version2(file)
         else:
@@ -157,7 +191,7 @@ class Encoder:
 class Decoder:
     def load_from(path):
         """
-        Charge l'image depuis son emplacement pour créer un objet Image qui contient des objets Pixel
+        Charge l'image depuis son emplacement pour créer un objet Image qui contient des objets de type Pixel.
         """     
         content = Decoder.fileContent(path)
         version = Decoder.getVersion(content)
@@ -177,15 +211,24 @@ class Decoder:
         return Image(width, height, pixels)
     
     def fileContent(path):
+        """
+        Ouvre et lit le contenu du fichier.
+        """
         with open(path, 'rb') as file:
             content = file.read()
         return content
     
     def getVersion(content):
+        """
+        Récupère la version de l'image.
+        """
         version = int(content[5])
         return version
 
     def decode_pixels(version, header, pixels_bytes, number_pixel):
+        """
+        En fonction de la version, renvoie vers la fonction appropriée.
+        """
         pixels = []
         if version == 1:
             Decoder.version1(pixels_bytes, pixels)
@@ -198,10 +241,18 @@ class Decoder:
         return pixels
 
     def version1(pixels_bytes, pixels):
+        """
+        Ajoute à la liste pixels chaques objets Pixel en prenant byte par byte le rouge, le vert et le bleu du pixel.
+        """
         for i in range(0, len(pixels_bytes), 3):
             pixels.append(Pixel(pixels_bytes[i], pixels_bytes[i + 1], pixels_bytes[i + 2]))
 
     def version2(pixels_bytes, pixels):
+        """
+        Ajoute à la liste pixels chaques objets Pixel en prenant byte par byte le rouge, le vert et le bleu du pixel, 
+        en le faisant avec le principe du RLE, donc le premier byte est le nombre de fois qu'il faut ajouter le même
+        pixel.
+        """
         i = 0
         while i < len(pixels_bytes):
             for _ in range(pixels_bytes[i]):
@@ -209,10 +260,11 @@ class Decoder:
             i += 4
 
     def version3(header, pixels_bytes, pixels, number_pixel):
+        """
+        Renvoie vers la bonne fonction de décodage en fonction du depth spécifié.
+        """
         depth_number, rle, palette = header[12], bool(header[13]), header[14:]
-        colors = []
-        for i in range(0, len(palette), 3):
-            colors.append([int(palette[i]), int(palette[i + 1]), int(palette[i + 2])])
+        colors = Decoder.paletteCreation(palette)
 
         if depth_number in [1, 2, 4]:
             pixels = Decoder.depth_1_to_4(pixels_bytes, pixels, number_pixel, depth_number, colors)
@@ -222,8 +274,20 @@ class Decoder:
             Decoder.depth24(pixels_bytes, pixels, rle)
             
         return pixels
+    
+    def paletteCreation(palette):
+        """
+        Récupère la palette et la stocke dans une liste.
+        """
+        colors = []
+        for i in range(0, len(palette), 3):
+            colors.append([int(palette[i]), int(palette[i + 1]), int(palette[i + 2])])
+        return colors
 
     def depth_1_to_4(pixels_bytes, pixels, number_pixel, depth_number, colors):
+        """
+        Ajoute à la liste pixels chaques objets Pixel pour un encodage de depth 1, 2 et 4 qui n'aura jamais de RLE.
+        """
         bits_list = []
         for i in pixels_bytes:
             bits_list.extend(format(int(i), '08b'))
@@ -234,6 +298,9 @@ class Decoder:
             index += depth_number
 
     def depth8(pixels_bytes, pixels, rle, colors):
+        """        
+        Ajoute à la liste pixels chaques objets Pixel pour un encodage de depth 8 avec ou sans RLE.
+        """
         if not rle:
             for i in pixels_bytes:
                 pixels.append(Pixel(colors[i][0], colors[i][1], colors[i][2]))
@@ -247,6 +314,10 @@ class Decoder:
                 i += 2
 
     def depth24(pixels_bytes, pixels, rle):
+        """
+        Décodage pour depth 24 avec au sans RLE. Comme c'est le même principe que la version 1 ou 2,
+        utilisation de la fonction d'encodage version2 pour RLE, sinon version1.
+        """
         if not rle:
             Decoder.version1(pixels_bytes, pixels)
         else:

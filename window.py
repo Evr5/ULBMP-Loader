@@ -12,6 +12,9 @@ from encoding import Encoder, Decoder
 
 class MainWindow(QMainWindow):
     def __init__(self):
+        """
+        Initialisation de la classe MainWindow.
+        """
         super().__init__()
         
         self.setWindowTitle("ULBMP Loader")
@@ -39,7 +42,10 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
-    def load_image(self):         
+    def load_image(self):        
+        """
+        Demande à l'utilisateur l'image à charger et l'affiche dans la fenêtre.
+        """ 
         file_dialog = QFileDialog()
         filename, _ = file_dialog.getOpenFileName(self, 'Ouvrir une image ULBMP')
         if filename:
@@ -61,6 +67,9 @@ class MainWindow(QMainWindow):
         
 
     def display_image(self):
+        """
+        Affiche l'image dans la fenêtre.
+        """
         pixel_bytes = bytearray()
         for pixel in self.image.pixels:
             pixel_bytes.extend([pixel.red, pixel.green, pixel.blue])
@@ -68,6 +77,9 @@ class MainWindow(QMainWindow):
         return QPixmap.fromImage(q_image)
 
     def update_color_count(self, filename):
+        """
+        Affiche le nombre de couleurs différentes qu'il y a dans l'image.
+        """
         content = Decoder.fileContent(filename)
         if Decoder.getVersion(content) == 3:
             # Obtenez tous les pixels de l'image
@@ -85,6 +97,9 @@ class MainWindow(QMainWindow):
             self.color_count_label.setText("")
 
     def save_image(self):
+        """
+        Demande à l'ulisateur où et dans quelle version il veut enregistrer l'image et l'enregistre.
+        """
         options = ["Version 1.0", "Version 2.0", "Version 3.0"]
         version, ok = QInputDialog.getItem(self, "Sélectionner la version", "Choisir la version du format ULBMP:",
                                            options, 0, False)
