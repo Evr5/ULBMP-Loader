@@ -33,6 +33,7 @@ class Encoder:
                 raise ValueError("Le choix de l'encodage rle n'est pas spécifié")
 
     def save_to(self, path):
+        start = time.time()
         header = bytearray([
             0x55, 0x4c, 0x42, 0x4d, 0x50,  # ULBMP en ASCII
             self.version,  # Version du format
@@ -52,6 +53,9 @@ class Encoder:
                     self.version1(file)
                 elif self.version == 2:
                     self.version2(file)
+
+        end = time.time()
+        print(f"Temps d'encodage : {end - start} secondes")
 
     def version1(self, file):
         for pixel in self.image.pixels:
@@ -105,15 +109,15 @@ class Encoder:
         bin_format = "0"
         bin_format += str(self.depth) + "b"
         
-        pixel_bits = ''
+        pixel_bits = []
         pixel_bytes = bytearray()
         for pixel in self.image.pixels:
             pixel_index = palette.index([pixel.red, pixel.green, pixel.blue])
-            pixel_bits += str(format(pixel_index, bin_format))
+            pixel_bits.extend(format(pixel_index, bin_format))
             while len(pixel_bits) >= 8:
                 byte_to_write = pixel_bits[:8]
                 pixel_bits = pixel_bits[8:]
-                pixel_bytes.append(int(byte_to_write, 2))
+                pixel_bytes.append(int(''.join(byte_to_write), 2))
                 
         # Si des bits restent à écrire à la fin
         if pixel_bits:
@@ -124,13 +128,13 @@ class Encoder:
 
     def depth8(self, palette):
         if not self.rle:
-            pixel_bits = ''
+            pixel_bits = []
             pixel_bytes = bytearray()
             for pixel in self.image.pixels:
-                pixel_bits += str(format(palette.index([pixel.red, pixel.green, pixel.blue]), '08b'))
+                pixel_bits.extend(format(palette.index([pixel.red, pixel.green, pixel.blue]), '08b'))
                 if len(pixel_bits) == 8:
-                    pixel_bytes += bytes([int(pixel_bits, 2)])
-                    pixel_bits = ''
+                    pixel_bytes.append(int(''.join(pixel_bits), 2))
+                    pixel_bits.clear()
 
         else:
             pixel_bytes = bytearray()
