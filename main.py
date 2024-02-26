@@ -4,8 +4,6 @@ PRÉNOM : Ethan
 SECTION : B1-INF0
 MATRICULE : 000589640
 """
-
-
 import sys
 from PySide6.QtWidgets import QApplication
 from window import MainWindow
