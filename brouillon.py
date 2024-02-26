@@ -1,79 +1,39 @@
 """
-def depth1(self, palette):
-        pixel_bits = ''
-        pixel_bytes = bytearray()  # Utilisation de bytearray pour modifier les octets
-        for pixel in self.image.pixels:
-            pixel_index = palette.index([pixel.red, pixel.green, pixel.blue])
-            pixel_bits += str(format(pixel_index, '01b'))
-            if len(pixel_bits) >= 8:
-                while len(pixel_bits) >= 8:  # Boucler jusqu'à ce que tous les 8 bits soient pleins
-                    byte_to_write = pixel_bits[:8]  # Prend les 8 premiers bits
-                    pixel_bits = pixel_bits[8:]  # Supprime les 8 premiers bits de pixel_bits
-                    pixel_bytes.append(int(byte_to_write, 2))  # Ajoute le byte à pixel_bytes
-                if len(pixel_bits) > 0:
-                    pixel_bits = pixel_bits.rjust(8, '0')  # Remplir avec des zéros à gauche si nécessaire
+pixel_bytes = bytearray()
+count = 1
+for i in range(1, len(self.image.pixels)):
+    if self.image.pixels[i] == self.image.pixels[i - 1]:
+        count += 1
+    else:
+        # Diviser count en octets individuels
+        while count > 0:
+            byte_value = count % 256  # Récupérer le reste de la division de count par 256
+            pixel_bytes.append(byte_value)  # Ajouter l'octet à pixel_bytes
+            count //= 256  # Diviser count par 256 pour obtenir le prochain octet
 
-        # Si des bits restent à écrire à la fin
-        if pixel_bits:
-            remaining_bits = pixel_bits.ljust(8, '0')  # Remplir avec des zéros à droite
-            pixel_bytes.append(int(remaining_bits, 2))
+        # Ajout de l'index de la couleur dans la palette
+        color_index = palette.index([self.image.pixels[i - 1].red, self.image.pixels[i - 1].green, self.image.pixels[i - 1].blue])
+        pixel_bytes.append(color_index)
 
-        return pixel_bytes
+        count = 1
 
-    def depth2(self, palette):
-        pixel_bits = ''
-        pixel_bytes = bytearray()  # Utilisation de bytearray pour modifier les octets
-        for pixel in self.image.pixels:
-            pixel_index = palette.index([pixel.red, pixel.green, pixel.blue])
-            pixel_bits += str(format(pixel_index, '02b'))  # Deux bits par pixel
-            while len(pixel_bits) >= 8:  # Boucler jusqu'à ce que tous les 8 bits soient pleins
-                byte_to_write = pixel_bits[:8]  # Prend les 8 premiers bits
-                pixel_bits = pixel_bits[8:]  # Supprime les 8 premiers bits de pixel_bits
-                pixel_bytes.append(int(byte_to_write, 2))  # Ajoute le byte à pixel_bytes
+# Ajout des derniers octets
+while count > 0:
+    byte_value = count % 256
+    pixel_bytes.append(byte_value)
+    count //= 256
 
-        # Si des bits restent à écrire à la fin
-        if pixel_bits:
-            remaining_bits = pixel_bits.ljust(8, '0')  # Remplir avec des zéros à droite
-            pixel_bytes.append(int(remaining_bits, 2))
-
-        return pixel_bytes
-
-    def depth4(self, palette):
-        pixel_bits = ''
-        pixel_bytes = bytearray()  # Utilisation de bytearray pour modifier les octets
-        for pixel in self.image.pixels:
-            pixel_index = palette.index([pixel.red, pixel.green, pixel.blue])
-            pixel_bits += str(format(pixel_index, '04b'))  # Quatre bits par pixel
-            while len(pixel_bits) >= 8:  # Boucler jusqu'à ce que tous les 8 bits soient pleins
-                byte_to_write = pixel_bits[:8]  # Prend les 8 premiers bits
-                pixel_bits = pixel_bits[8:]  # Supprime les 8 premiers bits de pixel_bits
-                pixel_bytes.append(int(byte_to_write, 2))  # Ajoute le byte à pixel_bytes
-
-        # Si des bits restent à écrire à la fin
-        if pixel_bits:
-            remaining_bits = pixel_bits.ljust(8, '0')  # Remplir avec des zéros à droite
-            pixel_bytes.append(int(remaining_bits, 2))
-
-        return pixel_bytes
+return pixel_bytes
 """
+from pixel import Pixel
 
-def depth1_2_4(self, palette, depth_version):
-    bin_format = "0"
-    bin_format += str(depth_version) + "b"
-    
-    pixel_bits = ''
-    pixel_bytes = bytearray()
-    for pixel in self.image.pixels:
-        pixel_index = palette.index([pixel.red, pixel.green, pixel.blue])
-        pixel_bits += str(format(pixel_index, bin_format))
-        while len(pixel_bits) >= 8:
-            byte_to_write = pixel_bits[:8]
-            pixel_bits = pixel_bits[8:]
-            pixel_bytes.append(int(byte_to_write, 2))
-            
-    # Si des bits restent à écrire à la fin
-    if pixel_bits:
-        remaining_bits = pixel_bits.ljust(8, '0')  # Remplir avec des zéros à droite
-        pixel_bytes.append(int(remaining_bits, 2))
+pixel = []
+for i in range (750*180):
+    pixel.append(Pixel(0, 0, 0))
+for i in range (750*180):
+    pixel.append(Pixel(255, 0, 0))
+for i in range (750*180):
+    pixel.append(Pixel(255, 255, 0))
 
-    return pixel_bytes
+print(len(pixel))
+

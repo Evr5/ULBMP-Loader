@@ -46,6 +46,8 @@ class MainWindow(QMainWindow):
         filename, _ = file_dialog.getOpenFileName(self, 'Ouvrir une image ULBMP')
         if filename:
             try:
+                start = time.time()
+
                 self.image = Decoder.load_from(filename)
                 self.update_color_count(filename)
                 self.save_button.setEnabled(True)
@@ -56,33 +58,37 @@ class MainWindow(QMainWindow):
                     self.setFixedSize(self.image.width, self.image.height)
                 else:   # si la taille de l'image est trop petite que pour que la taille de la fenêtre soit en fonction de la taille de l'image
                     self.setFixedSize(300, 100)
+
+                fin = time.time()
+                print(f"Temps pour load_image : {fin - start}")
+
             except Exception as e:
                 error_dialog = QErrorMessage()
                 error_dialog.showMessage(str(e))
                 error_dialog.exec()    
+        
 
     def display_image(self):
-        début = time.time()
-
         pixel_bytes = bytearray()
         for pixel in self.image.pixels:
             pixel_bytes.extend([pixel.red, pixel.green, pixel.blue])
         q_image = QImage(pixel_bytes, self.image.width, self.image.height, QImage.Format_RGB888)
-
-        fin = time.time()
-        print("test est de : ", fin - début)
-
         return QPixmap.fromImage(q_image)
 
     def update_color_count(self, filename):
         content = Decoder.fileContent(filename)
         if Decoder.getVersion(content) == 3:
-            unique_colors = set()
-            for y in range(self.image.height):
-                for x in range(self.image.width):
-                    pixel = self.image[x, y]
-                    unique_colors.add((pixel.red, pixel.green, pixel.blue))
-            self.color_count_label.setText(f"Nombre de couleurs : {len(unique_colors)}")
+            # Obtenez tous les pixels de l'image
+            pixels = self.image.pixels
+
+            # Utilisez une compréhension de liste pour extraire les couleurs uniques
+            unique_colors = { (pixel.red, pixel.green, pixel.blue) for pixel in pixels }
+
+            # Utilisez la longueur de l'ensemble pour obtenir le nombre de couleurs uniques
+            num_unique_colors = len(unique_colors)
+
+            # Afficher le nombre de couleurs uniques dans le label
+            self.color_count_label.setText(f"Nombre de couleurs : {num_unique_colors}")
         else:
             self.color_count_label.setText("")
 

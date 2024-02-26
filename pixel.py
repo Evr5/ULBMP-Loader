@@ -27,7 +27,7 @@ class Pixel:
         return self.__blue
 
     def __repr__(self):
-        return f"Pixel(Red: {self.red}, Green: {self.green}, Blue: {self.blue})"
+        return f"Pixel({self.red}, {self.green}, {self.blue})"
 
     def __eq__(self, other):
         if isinstance(other, Pixel):

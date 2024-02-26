@@ -74,14 +74,20 @@ class Encoder:
         file.write(bytes([same_pixel, current_pixel.red, current_pixel.green, current_pixel.blue]))
 
     def version3(self, path, header):
+        a = time.time()
         header = self.updateHeader(header)
+        b = time.time()
+        print(f"Temps de l'écriture du header : {b - a} secondes")
 
         with open(path, 'wb') as file:
             file.write(header)
             if self.depth == 24:
                 self.depth24(file)
             else:
+                c = time.time()
                 palette = self.palette()
+                d = time.time()
+                print(f"Temps de l'écriture du palette : {d - c} secondes")
                 if self.depth in [1, 2, 4]:
                     pixel_bytes = self.depth1_2_4(palette)
                 elif self.depth == 8:
@@ -89,20 +95,19 @@ class Encoder:
                 file.write(pixel_bytes)
 
     def palette(self):
-        palette = []
+        unique_colors = set()
         for pixel in self.image.pixels:
-            if [pixel.red, pixel.green, pixel.blue] not in palette:
-                palette.append([pixel.red, pixel.green, pixel.blue])
-        return palette
+            unique_colors.add((pixel.red, pixel.green, pixel.blue))
+        return [list(color) for color in unique_colors]
+
 
     def updateHeader(self, header):
-        if self.version == 3:
-            header += bytes([int(self.depth), int(self.rle)])
-            if self.depth in [1, 2, 4, 8]:
-                palette = self.palette()
-                header += bytes(sum(palette, []))
-            len_header = len(header) + 2  # longueur du header + les 2 bytes de la taille du header à écrire
-            header[6:6] = len_header.to_bytes(2, 'little')
+        header.extend((self.depth, self.rle))
+        if self.depth in [1, 2, 4, 8]:
+            palette = bytes(sum(self.palette(), []))
+            header.extend(palette)
+        len_header = len(header) + 2
+        header[6:6] = len_header.to_bytes(2, 'little')
         return header
 
     def depth1_2_4(self, palette):
@@ -114,7 +119,7 @@ class Encoder:
         for pixel in self.image.pixels:
             pixel_index = palette.index([pixel.red, pixel.green, pixel.blue])
             pixel_bits.extend(format(pixel_index, bin_format))
-            while len(pixel_bits) >= 8:
+            if len(pixel_bits) >= 8:
                 byte_to_write = pixel_bits[:8]
                 pixel_bits = pixel_bits[8:]
                 pixel_bytes.append(int(''.join(byte_to_write), 2))
@@ -128,26 +133,32 @@ class Encoder:
 
     def depth8(self, palette):
         if not self.rle:
+            g = time.time()
             pixel_bits = []
             pixel_bytes = bytearray()
             for pixel in self.image.pixels:
                 pixel_bits.extend(format(palette.index([pixel.red, pixel.green, pixel.blue]), '08b'))
-                if len(pixel_bits) == 8:
-                    pixel_bytes.append(int(''.join(pixel_bits), 2))
-                    pixel_bits.clear()
+                pixel_bytes.append(int(''.join(pixel_bits), 2))
+                pixel_bits.clear()
+            h = time.time()
+            print(f"Temps pour depth : {h - g} secondes")
 
         else:
+            """ A revoir !!!"""
             pixel_bytes = bytearray()
             count = 1
             for i in range(1, len(self.image.pixels)):
-                if self.image.pixels[i] == self.image.pixels[i - 1]:
+                if self.image.pixels[i] == self.image.pixels[i - 1] and count < 255:
                     count += 1
                 else:
-                    pixel_bytes += bytes([count]) + bytes([palette.index(
-                        [self.image.pixels[i - 1].red, self.image.pixels[i - 1].green, self.image.pixels[i - 1].blue])])
+                    print(palette.index(
+                        [self.image.pixels[i - 1].red, self.image.pixels[i - 1].green, self.image.pixels[i - 1].blue]))
+                    pixel_bytes.append(count + palette.index(
+                        [self.image.pixels[i - 1].red, self.image.pixels[i - 1].green, self.image.pixels[i - 1].blue]))
                     count = 1
-            pixel_bytes += bytes([count]) + bytes([palette.index(
-                [self.image.pixels[-1].red, self.image.pixels[-1].green, self.image.pixels[-1].blue])])
+            print("passer jusque ici")
+            pixel_bytes.append(count + palette.index(
+                [self.image.pixels[-1].red, self.image.pixels[-1].green, self.image.pixels[-1].blue]))
 
         return pixel_bytes
 
@@ -245,8 +256,7 @@ class Decoder:
     def depth8(pixels_bytes, pixels, rle, colors):
         if not rle:
             for i in pixels_bytes:
-                valeur = int(i)
-                pixels.append(Pixel(colors[valeur][0], colors[valeur][1], colors[valeur][2]))
+                pixels.append(Pixel(colors[i][0], colors[i][1], colors[i][2]))
         else:
             i = 0
             while i < len(pixels_bytes):
@@ -261,3 +271,20 @@ class Decoder:
             Decoder.version1(pixels_bytes, pixels)
         else:
             Decoder.version2(pixels_bytes, pixels)
+
+
+pixel = []
+
+for i in range (720*140):
+    pixel.append(Pixel(0, 0, 0))
+for i in range (720*120):
+    pixel.append(Pixel(255, 0, 0))
+for i in range (720*140):
+    pixel.append(Pixel(255, 240, 0))
+
+
+image = Image(720, 400, pixel)
+
+encode = Encoder(image, 3, depth = 2, rle = False)
+
+encode.save_to("C:/Users/ethan/Downloads/Germany.ulbmp")

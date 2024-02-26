@@ -1,0 +1,38 @@
+"""
+For depth = 2
+"""
+
+    pixel = []
+    for i in range (720*120):
+        pixel.append(Pixel(255, 255, 255))
+    for i in range (720*120):
+        pixel.append(Pixel(255, 0, 0))
+    for i in range (720*120):
+        pixel.append(Pixel(0, 255, 0))
+    for i in range (720*120):
+        pixel.append(Pixel(0, 0, 255))
+
+    image = Image(720, 480, pixel)
+
+    encode = Encoder(image, 3, depth = 2, rle = False)
+
+    encode.save_to("C:/Users/ethan/Downloads/depth2.ulbmp")
+"""
+
+
+"""
+Germany
+"""
+    pixel = []
+    for i in range (750*180):
+        pixel.append(Pixel(0, 0, 0))
+    for i in range (750*180):
+        pixel.append(Pixel(255, 0, 0))
+    for i in range (750*180):
+        pixel.append(Pixel(255, 255, 0))
+
+    image = Image(750, 540, pixel)
+
+    encode = Encoder(image, 3, depth = 2, rle = False)
+
+encode.save_to("C:/Users/ethan/Downloads/Germany.ulbmp")
