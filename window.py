@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QEr
     QVBoxLayout, QWidget, QHBoxLayout
 from PySide6.QtGui import QPixmap, QImage, QColor, QIcon
 from encoding import Encoder, Decoder
+import time
 
 
 class MainWindow(QMainWindow):
@@ -48,6 +49,7 @@ class MainWindow(QMainWindow):
         """ 
         file_dialog = QFileDialog()
         filename, _ = file_dialog.getOpenFileName(self, 'Ouvrir une image ULBMP')
+        start = time.time()
         if filename:
             try:
                 self.image = Decoder.load_from(filename)
@@ -64,6 +66,8 @@ class MainWindow(QMainWindow):
                 error_dialog = QErrorMessage()
                 error_dialog.showMessage(str(e))
                 error_dialog.exec()    
+        end = time.time()
+        print(f"Temps d'exécution : {end - start} secondes")
         
 
     def display_image(self):
@@ -137,6 +141,7 @@ class MainWindow(QMainWindow):
 
             filename, _ = QFileDialog.getSaveFileName(self, 'Enregistrer l\'image ULBMP',
                                                       filter="ULBMP Files (*.ulbmp)")
+            start = time.time()
             if filename:
                 try:
                     encoder = Encoder(self.image, format, depth=depth, rle=rle)
@@ -145,5 +150,7 @@ class MainWindow(QMainWindow):
                     error_dialog = QErrorMessage()
                     error_dialog.showMessage(str(e))
                     error_dialog.exec()
+            end = time.time()
+            print(f"Temps de download : {end - start} secondes")
         else:
             QMessageBox.information(self, "Annulation", "Vous avez annulé le choix de version du format ULBMP.")
