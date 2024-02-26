@@ -109,7 +109,6 @@ class Encoder:
             unique_colors.add((pixel.red, pixel.green, pixel.blue))
         return [list(color) for color in unique_colors]
 
-
     def updateHeader(self, header):
         """
         Ajout de la taille du header et de la palette dans le header.
