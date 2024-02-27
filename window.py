@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
                 error_dialog.showMessage(str(e))
                 error_dialog.exec()    
         end = time.time()
-        print(f"Temps d'exécution : {end - start} secondes")
+        print(f"Temps d'upload' : {end - start} secondes")
         
 
     def display_image(self):
