@@ -25,6 +25,7 @@ while count > 0:
 
 return pixel_bytes
 """
+from image import Image
 from pixel import Pixel
 
 pixel = []
@@ -32,8 +33,7 @@ for i in range (750*180):
     pixel.append(Pixel(0, 0, 0))
 for i in range (750*180):
     pixel.append(Pixel(255, 0, 0))
-for i in range (750*180):
-    pixel.append(Pixel(255, 255, 0))
 
-print(len(pixel))
+image1 = Image(750, 180, pixel)
+Decoder.en
 
