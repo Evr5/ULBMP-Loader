@@ -58,7 +58,7 @@ class MainWindow(QMainWindow):
                 pixmap = self.display_image()
                 self.image_label.setPixmap(pixmap)
                 # taille convenable pour que la taille de la fenêtre soit en fonction de la taille de l'image
-                if self.image.width > 300 and self.image.height > 100: 
+                if self.image.width > 300 or self.image.height > 100: 
                     self.setFixedSize(self.image.width, self.image.height)
                 else:   # si la taille de l'image est trop petite que pour que la taille de la fenêtre soit en fonction de la taille de l'image
                     self.setFixedSize(300, 100)
