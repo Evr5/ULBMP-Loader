@@ -158,21 +158,19 @@ class Encoder:
                 pixel_bits.clear()
 
         else:
-            """ A revoir !!!"""
             pixel_bytes = bytearray()
-            count = 1
-            for i in range(1, len(self.image.pixels)):
-                if self.image.pixels[i] == self.image.pixels[i - 1] and count < 255:
-                    count += 1
+            current_pixel = self.image.pixels[0]
+            same_pixel_count = 1
+            for next_pixel in self.image.pixels[1:]:
+                if next_pixel == current_pixel and same_pixel_count < 255:
+                    same_pixel_count += 1
                 else:
-                    print(palette.index(
-                        [self.image.pixels[i - 1].red, self.image.pixels[i - 1].green, self.image.pixels[i - 1].blue]))
-                    pixel_bytes.append(count + palette.index(
-                        [self.image.pixels[i - 1].red, self.image.pixels[i - 1].green, self.image.pixels[i - 1].blue]))
-                    count = 1
-            print("passer jusque ici")
-            pixel_bytes.append(count + palette.index(
-                [self.image.pixels[-1].red, self.image.pixels[-1].green, self.image.pixels[-1].blue]))
+                    pixel_index = palette.index([current_pixel.red, current_pixel.green, current_pixel.blue])
+                    pixel_bytes.extend([same_pixel_count, pixel_index])
+                    current_pixel = next_pixel
+                    same_pixel_count = 1
+            pixel_index = palette.index([current_pixel.red, current_pixel.green, current_pixel.blue])
+            pixel_bytes.extend([same_pixel_count, pixel_index])
 
         return pixel_bytes
 
