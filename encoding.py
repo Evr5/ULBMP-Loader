@@ -140,8 +140,9 @@ class Encoder:
                 
         # Si des bits restent à écrire à la fin
         if pixel_bits:
-            remaining_bits = pixel_bits.ljust(8, '0')  # Remplir avec des zéros à droite
-            pixel_bytes.append(int(remaining_bits, 2))
+            remaining_bits_count = 8 - len(pixel_bits)
+            pixel_bits.extend('0' * remaining_bits_count)
+            pixel_bytes.append(int(''.join(pixel_bits), 2))
 
         return pixel_bytes
 
