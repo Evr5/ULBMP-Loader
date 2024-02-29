@@ -8,10 +8,6 @@ from pixel import Pixel
 from image import Image
 
 
-
-"""regarder problème d'encodage de l'image sur les lignes !!!"""
-
-
 class Encoder:
     def __init__(self, img, version=1, **kwargs):
         """
