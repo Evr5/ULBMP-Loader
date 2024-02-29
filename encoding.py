@@ -192,7 +192,7 @@ class Decoder:
         Charge l'image depuis son emplacement pour créer un objet Image qui contient des objets de type Pixel.
         """     
         content = Decoder.fileContent(path)
-        version = Decoder.getVersion(content)
+        version = int(content[5])
         header_size = int.from_bytes(content[6:8], 'little')
         header = content[: header_size]
 
@@ -215,13 +215,6 @@ class Decoder:
         with open(path, 'rb') as file:
             content = file.read()
         return content
-    
-    def getVersion(content):
-        """
-        Récupère la version de l'image.
-        """
-        version = int(content[5])
-        return version
 
     def decode_pixels(version, header, pixels_bytes, number_pixel):
         """

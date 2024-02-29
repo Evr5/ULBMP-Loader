@@ -27,13 +27,18 @@ return pixel_bytes
 """
 from image import Image
 from pixel import Pixel
+pixel_24 = []
+for i in range(0, 256, 6):
+    for j in range(0, 256, 4):
+        for k in range(0, 256, 1):
+            pixel_24.append(Pixel(i, j, k))
 
-pixel = []
-for i in range (750*180):
-    pixel.append(Pixel(0, 0, 0))
-for i in range (750*180):
-    pixel.append(Pixel(255, 0, 0))
-
-image1 = Image(750, 180, pixel)
-Decoder.en
-
+list = [2, 8, 89, 56, 1, 456]
+if 8 in list:
+    print(True)
+if 0 not in list:
+    print("ok")
+if 456 in list:
+    print(True)
+if 5 in list:
+    print(False)
