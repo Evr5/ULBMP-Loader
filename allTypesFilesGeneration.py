@@ -20,15 +20,15 @@ Encoder(image1, 2).save_to(download_folder+'v2_2colors.ulbmp')
 
 
 pixel1 = []
-for i in range(112500):
-    pixel1.append(Pixel(0, 255, 0))
-for i in range(112500):
-    pixel1.append(Pixel(0, 0, 255))
-for i in range(112500):
+for i in range(15000):
     pixel1.append(Pixel(0, 0, 0))
-for i in range(112500):
+for i in range(15000):
     pixel1.append(Pixel(255, 255, 255))
-image2 = Image(750, 600, pixel1)
+for i in range(15000):
+    pixel1.append(Pixel(0, 0, 0))
+for i in range(15000):
+    pixel1.append(Pixel(255, 255, 255))
+image2 = Image(750, 80, pixel1)
 Encoder(image2, 3, depth = 2, rle = False).save_to(download_folder+"v3_depth2.ulbmp")
 Encoder(image2, 1).save_to(download_folder+'v1_4colors.ulbmp')
 Encoder(image2, 2).save_to(download_folder+'v2_4colors.ulbmp')

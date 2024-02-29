@@ -57,8 +57,12 @@ class MainWindow(QMainWindow):
                 self.save_button.setEnabled(True)
                 pixmap = self.displayImage(filename)
                 self.image_label.setPixmap(pixmap)
-                if self.image.width > 300 or self.image.height > 100: 
+                if self.image.width > 300 and self.image.height > 100: 
                     self.setFixedSize(self.image.width, self.image.height)
+                elif self.image.width <= 300 and self.image.height > 100:
+                    self.setFixedSize(300, self.image.height)
+                elif self.image.width > 300 and self.image.height <= 100:
+                    self.setFixedSize(self.image.width, 100)
                 else:   # si la taille de l'image est trop petite que pour que la taille de la fenêtre soit en fonction de la taille de l'image
                     self.setFixedSize(300, 100)
             except Exception as e:
