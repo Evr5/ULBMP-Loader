@@ -53,12 +53,11 @@ class MainWindow(QMainWindow):
         if filename:
             try:
                 self.image = Decoder.load_from(filename)
-                self.colorNumber()
                 self.save_button.setEnabled(True)
-                pixmap = self.displayImage(filename)
+                pixmap = self.displayImage()
                 self.image_label.setPixmap(pixmap)
                 if self.image.width > 300 and self.image.height > 100: 
-                    self.setFixedSize(self.image.width, self.image.height)
+                    self.setFixedSize(self.image.width, self.image.height + 50)
                 elif self.image.width <= 300 and self.image.height > 100:
                     self.setFixedSize(300, self.image.height)
                 elif self.image.width > 300 and self.image.height <= 100:
@@ -72,32 +71,34 @@ class MainWindow(QMainWindow):
         end = time.time()
         print(f"Temps d'upload' : {end - start} secondes")
         
-    def displayImage(self, filename):
+    def displayImage(self):
         """
         Affiche l'image dans la fenêtre.
         """
+        start = time.time()
         qimage = QImage(self.image.width, self.image.height, QImage.Format_RGB888)
+        colors_set = set()  # Ensemble pour stocker les couleurs uniques
+
         for y in range(self.image.height):
             for x in range(self.image.width):
-                pixel = self.image.pixels[y * self.image.width+ x]
+                pixel = self.image.pixels[y * self.image.width + x]
                 qcolor = QColor(pixel.red, pixel.green, pixel.blue)
                 qimage.setPixelColor(x, y, qcolor)
+                colors_set.add((qcolor.red(), qcolor.green(), qcolor.blue()))  # Ajouter la couleur à l'ensemble
+
+        # Le nombre de couleurs différentes est la longueur de l'ensemble
+        number_of_colors = len(colors_set)
+
+        # Afficher le nombre de couleurs dans un QLabel
+        self.color_count_label.setText(f"Nombre de couleurs : {number_of_colors}")
+
+        end = time.time()
+        print(f"Temps d'affichage : {end - start} secondes")
 
         # Créer un QPixmap à partir de l'image
-        return QPixmap.fromImage(qimage)
+        pixmap = QPixmap.fromImage(qimage)
 
-    def colorNumber(self):
-        """
-        Affiche le nombre de couleurs différentes qu'il y a dans l'image.
-        """
-        pixels = self.image.pixels
-        # Utilisez une compréhension de liste pour extraire les couleurs uniques
-        unique_colors = {(pixel.red, pixel.green, pixel.blue) for pixel in pixels}
-        # Utilisez la longueur de l'ensemble pour obtenir le nombre de couleurs uniques
-        num_unique_colors = len(unique_colors)
-        # Afficher le nombre de couleurs uniques dans le label
-        self.color_count_label.setText(f"Nombre de couleurs : {num_unique_colors}")
-
+        return pixmap
 
     def save_image(self):
         """
