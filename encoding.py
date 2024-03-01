@@ -6,6 +6,7 @@ MATRICULE : 000589640
 """
 from pixel import Pixel
 from image import Image
+import time
 
 
 class Encoder:
@@ -235,8 +236,11 @@ class Decoder:
         """
         Ajoute à la liste pixels chaques objets Pixel en prenant byte par byte le rouge, le vert et le bleu du pixel.
         """
+        start = time.time()
         for i in range(0, len(pixels_bytes), 3):
             pixels.append(Pixel(pixels_bytes[i], pixels_bytes[i + 1], pixels_bytes[i + 2]))
+        end = time.time()
+        print("temps de chargenent v1 : ", end-start, " secondes")
 
     def version2(pixels_bytes, pixels):
         """

@@ -3,10 +3,9 @@ from pixel import Pixel
 from encoding import Encoder
 import os
 
-user_folder = os.path.expanduser("~")
-download_folder = os.path.join(user_folder, "Téléchargements/") + "allTypesULBMP/"
+download_folder = os.path.join(os.path.expanduser('~'), 'Downloads/ulbmpImages/')
 
-"""
+
 pixel = []
 for i in range(187500):
     pixel.append(Pixel(0, 0, 0))
@@ -90,7 +89,7 @@ Encoder(image4, 3, depth=8, rle=True).save_to(
 Encoder(image4, 1).save_to(download_folder + "v1_256colors.ulbmp")
 Encoder(image4, 2).save_to(download_folder + "v2_256colors.ulbmp")
 
-"""
+
 colors = []
 for r in range(256):
     for g in range(256):

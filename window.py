@@ -81,11 +81,11 @@ class MainWindow(QMainWindow):
 
         for y in range(self.image.height):
             for x in range(self.image.width):
+                pixel = self.image.pixels[y * self.image.width+ x]
                 pixel = self.image.pixels[y * self.image.width + x]
                 qcolor = QColor(pixel.red, pixel.green, pixel.blue)
                 qimage.setPixelColor(x, y, qcolor)
                 colors_set.add((qcolor.red(), qcolor.green(), qcolor.blue()))  # Ajouter la couleur à l'ensemble
-
         # Le nombre de couleurs différentes est la longueur de l'ensemble
         number_of_colors = len(colors_set)
 
@@ -95,10 +95,7 @@ class MainWindow(QMainWindow):
         end = time.time()
         print(f"Temps d'affichage : {end - start} secondes")
 
-        # Créer un QPixmap à partir de l'image
-        pixmap = QPixmap.fromImage(qimage)
-
-        return pixmap
+        return QPixmap.fromImage(qimage)
 
     def save_image(self):
         """
