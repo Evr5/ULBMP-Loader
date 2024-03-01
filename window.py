@@ -34,6 +34,7 @@ class MainWindow(QMainWindow):
         buttons_layout.addWidget(self.load_button)
         buttons_layout.addWidget(self.save_button)
 
+
         layout = QVBoxLayout()
         layout.addLayout(buttons_layout)
         layout.addWidget(self.image_label)
@@ -56,14 +57,7 @@ class MainWindow(QMainWindow):
                 self.save_button.setEnabled(True)
                 pixmap = self.displayImage()
                 self.image_label.setPixmap(pixmap)
-                if self.image.width > 300 and self.image.height > 100: 
-                    self.setFixedSize(self.image.width, self.image.height + 50)
-                elif self.image.width <= 300 and self.image.height > 100:
-                    self.setFixedSize(300, self.image.height)
-                elif self.image.width > 300 and self.image.height <= 100:
-                    self.setFixedSize(self.image.width, 100)
-                else:   # si la taille de l'image est trop petite que pour que la taille de la fenêtre soit en fonction de la taille de l'image
-                    self.setFixedSize(300, 100)
+                self.ajustWindowSize()
             except Exception as e:
                 error_dialog = QErrorMessage()
                 error_dialog.showMessage(str(e))
@@ -96,6 +90,21 @@ class MainWindow(QMainWindow):
         print(f"Temps d'affichage : {end - start} secondes")
 
         return QPixmap.fromImage(qimage)
+    
+    def ajustWindowSize(self):
+        """
+        Ajuste la taille de la fenêtre en fonction de la taille de l'image.
+        """
+        if self.image.width > 300 and self.image.height > 100: 
+            self.setFixedSize(self.image.width, self.image.height)
+        elif self.image.width <= 300 and self.image.height > 100:
+            self.setFixedSize(300, self.image.height)
+        elif self.image.width > 300 and self.image.height <= 100:
+            self.setFixedSize(self.image.width, 100)
+        else:   # si la taille de l'image est trop petite que pour que la taille de la fenêtre soit en fonction de la taille de l'image
+            self.setFixedSize(300, 100)
+
+
 
     def save_image(self):
         """

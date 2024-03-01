@@ -203,8 +203,7 @@ class Decoder:
 
         width = int.from_bytes(header[8:10], 'little')
         height = int.from_bytes(header[10:12], 'little')
-        number_pixel = height*width
-
+        number_pixel = height * width
         pixels_bytes = content[header_size:]
         pixels = Decoder.decode_pixels(version, header, pixels_bytes, number_pixel)
         return Image(width, height, pixels)
@@ -214,8 +213,7 @@ class Decoder:
         Ouvre et lit le contenu du fichier.
         """
         with open(path, 'rb') as file:
-            content = file.read()
-        return content
+            return file.read()
 
     def decode_pixels(version, header, pixels_bytes, number_pixel):
         """
@@ -256,64 +254,66 @@ class Decoder:
 
     def version3(header, pixels_bytes, pixels, number_pixel):
         """
-        Renvoie vers la bonne fonction de décodage en fonction du depth spécifié.
+        Ajoute à la liste pixels chaques objets Pixel avec le principe de la pelette de couleurs.
         """
+        def paletteCreation(palette):
+            """
+            Récupère la palette et la stocke dans une liste.
+            """
+            colors = []
+            for i in range(0, len(palette), 3):
+                colors.append([int(palette[i]), int(palette[i + 1]), int(palette[i + 2])])
+            return colors
+
+        def depth_1_to_4(pixels_bytes, pixels, number_pixel, depth_number, colors):
+            """
+            Ajoute à la liste pixels chaques objets Pixel pour un encodage de depth 1, 2 et 4 qui n'aura jamais de RLE.
+            """
+            bits_list = []
+            for i in pixels_bytes:
+                bits_list.extend(format(int(i), '08b'))
+            index = 0
+            while len(pixels) < number_pixel and index < len(bits_list) - (depth_number - 1):
+                valeur = int(''.join(bits_list[index:index + depth_number]), 2)
+                pixels.append(Pixel(colors[valeur][0], colors[valeur][1], colors[valeur][2]))
+                index += depth_number
+
+        def depth8(pixels_bytes, pixels, rle, colors):
+            """        
+            Ajoute à la liste pixels chaques objets Pixel pour un encodage de depth 8 avec ou sans RLE.
+            """
+            if not rle:
+                for i in pixels_bytes:
+                    pixels.append(Pixel(colors[i][0], colors[i][1], colors[i][2]))
+            else:
+                i = 0
+                while i < len(pixels_bytes):
+                    count = pixels_bytes[i]
+                    value_byte = int(pixels_bytes[i + 1])
+                    for _ in range(count):
+                        pixels.append(Pixel(colors[value_byte][0], colors[value_byte][1], colors[value_byte][2]))
+                    i += 2
+
+        def depth24(pixels_bytes, pixels, rle):
+            """
+            Décodage pour depth 24 avec au sans RLE. Comme c'est le même principe que la version 1 ou 2,
+            utilisation de la fonction d'encodage version2 pour RLE, sinon version1.
+            """
+            if not rle:
+                Decoder.version1(pixels_bytes, pixels)
+            else:
+                Decoder.version2(pixels_bytes, pixels)
+
+
         depth_number, rle, palette = header[12], bool(header[13]), header[14:]
-        colors = Decoder.paletteCreation(palette)
+        colors = paletteCreation(palette)
 
         if depth_number in [1, 2, 4]:
-            pixels = Decoder.depth_1_to_4(pixels_bytes, pixels, number_pixel, depth_number, colors)
+            pixels = depth_1_to_4(pixels_bytes, pixels, number_pixel, depth_number, colors)
         elif depth_number == 8:
-            pixels = Decoder.depth8(pixels_bytes, pixels, rle, colors)
+            pixels = depth8(pixels_bytes, pixels, rle, colors)
         elif depth_number == 24:
-            Decoder.depth24(pixels_bytes, pixels, rle)
+            depth24(pixels_bytes, pixels, rle)
             
         return pixels
     
-    def paletteCreation(palette):
-        """
-        Récupère la palette et la stocke dans une liste.
-        """
-        colors = []
-        for i in range(0, len(palette), 3):
-            colors.append([int(palette[i]), int(palette[i + 1]), int(palette[i + 2])])
-        return colors
-
-    def depth_1_to_4(pixels_bytes, pixels, number_pixel, depth_number, colors):
-        """
-        Ajoute à la liste pixels chaques objets Pixel pour un encodage de depth 1, 2 et 4 qui n'aura jamais de RLE.
-        """
-        bits_list = []
-        for i in pixels_bytes:
-            bits_list.extend(format(int(i), '08b'))
-        index = 0
-        while len(pixels) < number_pixel and index < len(bits_list) - (depth_number - 1):
-            valeur = int(''.join(bits_list[index:index + depth_number]), 2)
-            pixels.append(Pixel(colors[valeur][0], colors[valeur][1], colors[valeur][2]))
-            index += depth_number
-
-    def depth8(pixels_bytes, pixels, rle, colors):
-        """        
-        Ajoute à la liste pixels chaques objets Pixel pour un encodage de depth 8 avec ou sans RLE.
-        """
-        if not rle:
-            for i in pixels_bytes:
-                pixels.append(Pixel(colors[i][0], colors[i][1], colors[i][2]))
-        else:
-            i = 0
-            while i < len(pixels_bytes):
-                count = pixels_bytes[i]
-                value_byte = int(pixels_bytes[i + 1])
-                for _ in range(count):
-                    pixels.append(Pixel(colors[value_byte][0], colors[value_byte][1], colors[value_byte][2]))
-                i += 2
-
-    def depth24(pixels_bytes, pixels, rle):
-        """
-        Décodage pour depth 24 avec au sans RLE. Comme c'est le même principe que la version 1 ou 2,
-        utilisation de la fonction d'encodage version2 pour RLE, sinon version1.
-        """
-        if not rle:
-            Decoder.version1(pixels_bytes, pixels)
-        else:
-            Decoder.version2(pixels_bytes, pixels)
