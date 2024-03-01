@@ -6,7 +6,7 @@ import os
 user_folder = os.path.expanduser("~")
 download_folder = os.path.join(user_folder, "Téléchargements/") + "allTypesULBMP/"
 
-
+"""
 pixel = []
 for i in range(187500):
     pixel.append(Pixel(0, 0, 0))
@@ -90,13 +90,14 @@ Encoder(image4, 3, depth=8, rle=True).save_to(
 Encoder(image4, 1).save_to(download_folder + "v1_256colors.ulbmp")
 Encoder(image4, 2).save_to(download_folder + "v2_256colors.ulbmp")
 
-
-pixel_24 = []
-for i in range(0, 256, 6):
-    for j in range(0, 256, 4):
-        for k in range(0, 256, 1):
-            pixel_24.append(Pixel(i, j, k))
-image5 = Image(1376, 512, pixel_24)
+"""
+colors = []
+for r in range(256):
+    for g in range(256):
+        for b in range(256):
+            pixel = Pixel(r, g, b)
+            colors.append(pixel)
+image5 = Image(8192, 2048, colors)
 Encoder(image5, 3, depth=24, rle=False).save_to(
     download_folder + "v3_depth24_rle=False.ulbmp"
 )

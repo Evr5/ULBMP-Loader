@@ -1,4 +1,5 @@
-number = 37500
+number = 16777216
+
 divisors = []
 
 for i in range(1, number + 1):
