@@ -76,11 +76,15 @@ class MainWindow(QMainWindow):
         """
         Affiche l'image dans la fenêtre.
         """
-        pixel_bytes = bytearray()
-        for pixel in self.image.pixels:
-            pixel_bytes.extend([pixel.red, pixel.green, pixel.blue])
-        image = QImage(pixel_bytes, self.image.width, self.image.height, QImage.Format_RGB888)
-        return QPixmap.fromImage(image)
+        qimage = QImage(self.image.width, self.image.height, QImage.Format_RGB888)
+        for y in range(self.image.height):
+            for x in range(self.image.width):
+                pixel = self.image.pixels[y * self.image.width+ x]
+                qcolor = QColor(pixel.red, pixel.green, pixel.blue)
+                qimage.setPixelColor(x, y, qcolor)
+
+        # Créer un QPixmap à partir de l'image
+        return QPixmap.fromImage(qimage)
 
     def colorNumber(self):
         """

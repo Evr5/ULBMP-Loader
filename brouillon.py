@@ -1,44 +1,44 @@
-"""
-pixel_bytes = bytearray()
-count = 1
-for i in range(1, len(self.image.pixels)):
-    if self.image.pixels[i] == self.image.pixels[i - 1]:
-        count += 1
-    else:
-        # Diviser count en octets individuels
-        while count > 0:
-            byte_value = count % 256  # Récupérer le reste de la division de count par 256
-            pixel_bytes.append(byte_value)  # Ajouter l'octet à pixel_bytes
-            count //= 256  # Diviser count par 256 pour obtenir le prochain octet
+import sys
+from PySide6.QtWidgets import QApplication, QLabel
+from PySide6.QtGui import QPixmap, QImage, QColor
 
-        # Ajout de l'index de la couleur dans la palette
-        color_index = palette.index([self.image.pixels[i - 1].red, self.image.pixels[i - 1].green, self.image.pixels[i - 1].blue])
-        pixel_bytes.append(color_index)
+class Pixel:
+    def __init__(self, r, g, b):
+        self.r = r
+        self.g = g
+        self.b = b
 
-        count = 1
+def main():
+    # Créer une application Qt
+    app = QApplication(sys.argv)
 
-# Ajout des derniers octets
-while count > 0:
-    byte_value = count % 256
-    pixel_bytes.append(byte_value)
-    count //= 256
+    # Dimensions de l'image
+    largeur = 500
+    hauteur = 300
 
-return pixel_bytes
-"""
-from image import Image
-from pixel import Pixel
-pixel_24 = []
-for i in range(0, 256, 6):
-    for j in range(0, 256, 4):
-        for k in range(0, 256, 1):
-            pixel_24.append(Pixel(i, j, k))
+    # Liste de pixels
+    pixels = [Pixel(250, 0, 0)] * (largeur * hauteur)
 
-list = [2, 8, 89, 56, 1, 456]
-if 8 in list:
-    print(True)
-if 0 not in list:
-    print("ok")
-if 456 in list:
-    print(True)
-if 5 in list:
-    print(False)
+    # Créer une image Qt
+    qimage = QImage(largeur, hauteur, QImage.Format_RGB888)
+
+    # Remplir l'image avec les pixels
+    for y in range(hauteur):
+        for x in range(largeur):
+            pixel = pixels[y * largeur + x]
+            qcolor = QColor(pixel.r, pixel.g, pixel.b)
+            qimage.setPixelColor(x, y, qcolor)
+
+    # Créer un QPixmap à partir de l'image
+    pixmap = QPixmap.fromImage(qimage)
+
+    # Créer un QLabel pour afficher le QPixmap
+    label = QLabel()
+    label.setPixmap(pixmap)
+    label.show()
+
+    # Exécuter l'application Qt
+    sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()
