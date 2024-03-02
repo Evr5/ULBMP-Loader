@@ -23,9 +23,8 @@ class Encoder:
         self.checkError()
 
     def checkError(self):
-        if self.version not in [1, 2, 3]:
-            raise ValueError("La version de ULBMP n'est valide")
-
+        if self.version not in [1, 2, 3, 4]:
+            raise ValueError("La version de ULBMP n'est pas valide")
         if self.rle and self.depth in [1, 2, 4]:
             raise ValueError("L'encodage RLE n'est disponible que pour une profondeur de 8 ou 24")
         
@@ -34,7 +33,7 @@ class Encoder:
                 raise ValueError("Il manque le choix de profondeur")
             elif self.rle not in [True, False]:
                 raise ValueError("Le choix de l'encodage rle n'est pas spécifié")
-
+            
     def save_to(self, path):
         """
         Encodage d'un fichier ULBMP au path spécifié.
@@ -45,21 +44,20 @@ class Encoder:
             *self.image.width.to_bytes(2, 'little'),  # Largeur de l'image en little-endian
             *self.image.height.to_bytes(2, 'little')  # Hauteur de l'image en little-endian
         ])
-
         if self.version == 3:
             self.version3(path, header)
-
         else:
             # Ajout de la taille du header dans le header
             header.insert(6, 0x0c)
             header.insert(7, 0x00)
-
             with open(path, 'wb') as file:
                 file.write(header)
                 if self.version == 1:
                     self.version1(file)
                 elif self.version == 2:
                     self.version2(file)
+                else:
+                    self.version4(file)
 
     def version1(self, file):
         """
@@ -101,6 +99,9 @@ class Encoder:
                     pixel_bytes = self.depth8(palette)
                 file.write(pixel_bytes)
 
+    def version4(self, file):
+        pass
+
     def palette(self):
         """
         Création de la plalette en fonction des différentes couleurs rencontrées dans l'image.
@@ -109,7 +110,7 @@ class Encoder:
         for pixel in self.image.pixels:
             unique_colors.add((pixel.red, pixel.green, pixel.blue))
         return [list(color) for color in unique_colors]
-
+    
     def updateHeader(self, header):
         """
         Ajout de la taille du header et de la palette dans le header.
@@ -121,7 +122,7 @@ class Encoder:
         len_header = len(header) + 2
         header[6:6] = len_header.to_bytes(2, 'little')
         return header
-
+    
     def depth1_2_4(self, palette):
         """
         Encodage pour les depth 1, 2 et 4 qui n'auront jamais de RLE.
@@ -144,9 +145,8 @@ class Encoder:
             remaining_bits_count = 8 - len(pixel_bits)
             pixel_bits.extend('0' * remaining_bits_count)
             pixel_bytes.append(int(''.join(pixel_bits), 2))
-
         return pixel_bytes
-
+    
     def depth8(self, palette):
         """
         Encodage pour depth 8 avec ou sans RLE.
@@ -158,7 +158,6 @@ class Encoder:
                 pixel_bits.extend(format(palette.index([pixel.red, pixel.green, pixel.blue]), '08b'))
                 pixel_bytes.append(int(''.join(pixel_bits), 2))
                 pixel_bits.clear()
-
         else:
             pixel_bytes = bytearray()
             current_pixel = self.image.pixels[0]
@@ -173,9 +172,8 @@ class Encoder:
                     same_pixel_count = 1
             pixel_index = palette.index([current_pixel.red, current_pixel.green, current_pixel.blue])
             pixel_bytes.extend([same_pixel_count, pixel_index])
-
         return pixel_bytes
-
+    
     def depth24(self, file):
         """
         Encodage pour depth 24 avec au sans RLE. Comme c'est le même principe que la version 1 ou 2,
@@ -185,7 +183,7 @@ class Encoder:
             self.version2(file)
         else:
             self.version1(file)
-
+    
 
 class Decoder:
     def load_from(path):
@@ -197,9 +195,7 @@ class Decoder:
         header_size = int.from_bytes(content[6:8], 'little')
         header = content[: header_size]
 
-        if header[:5] != bytes([0x55, 0x4c, 0x42, 0x4d, 0x50]):
-            raise ValueError("Il y a eu un problème lors de la lecture de l'image:\n'Mauvais format: il manque"
-                             " 'ULBMP' dans l'en-tête")
+        Decoder.checkErrors(header, version)
 
         width = int.from_bytes(header[8:10], 'little')
         height = int.from_bytes(header[10:12], 'little')
@@ -207,6 +203,14 @@ class Decoder:
         pixels_bytes = content[header_size:]
         pixels = Decoder.decode_pixels(version, header, pixels_bytes, number_pixel)
         return Image(width, height, pixels)
+    
+    def checkErrors(header, version):
+        if version not in [1, 2, 3, 4]:
+            raise ValueError("La version de ULBMP n'est pas valide")
+        
+        elif header[:5] != bytes([0x55, 0x4c, 0x42, 0x4d, 0x50]):
+            raise ValueError("Il y a eu un problème lors de la lecture de l'image:\n'Mauvais format: il manque"
+                             " 'ULBMP' dans l'en-tête")
     
     def fileContent(path):
         """
@@ -227,7 +231,7 @@ class Decoder:
         elif version == 3:
             Decoder.version3(header, pixels_bytes, pixels, number_pixel)
         else:
-            raise ValueError("Version ULBMP non prise en charge")
+            Decoder.version4(pixels_bytes, pixels, number_pixel)
         return pixels
 
     def version1(pixels_bytes, pixels):
@@ -317,3 +321,27 @@ class Decoder:
             
         return pixels
     
+    def version4(pixels_bytes, pixels, number_pixel):
+        i = 0
+        while len(pixels) != number_pixel:
+            current_pixel_bytes = pixels_bytes[i]
+            if current_pixel_bytes == number_pixel:
+                methode = Decoder.ULBMP_NEW_PIXEL(pixels_bytes, pixels, i)
+
+    def ULBMP_NEW_PIXEL(pixels_bytes, pixels, i):
+        pixels.append(Pixel(pixels_bytes[i + 1], pixels_bytes[i + 2], pixels_bytes[i + 3]))
+
+    def ULBMP_SMALL_DIFF():
+        pass
+
+    def URBMP_INTERMEDIATE_DIFF():
+        pass
+
+    def ULBMP_BIG_DIFF_R():
+        pass
+
+    def ULBMP_BIG_DIFF_G():
+        pass
+
+    def ULBMP_BIG_DIFF_B():
+        pass
