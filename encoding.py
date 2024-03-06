@@ -86,104 +86,104 @@ class Encoder:
         """
         Pour la version 3 de l'ULBMP, encodage spécifique au depth et RLE spécifié.
         """
-        header = self.updateHeader(header)  # Ajout de la taille du header et de la palette
+        def palette(self):
+            """
+            Création de la plalette en fonction des différentes couleurs rencontrées dans l'image.
+            """
+            unique_colors = set()
+            for pixel in self.image.pixels:
+                unique_colors.add((pixel.red, pixel.green, pixel.blue))
+            return [list(color) for color in unique_colors]
+
+        def updateHeader(self, header, palette):
+            """
+            Ajout de la taille du header et de la palette dans le header.
+            """
+            header.extend((self.depth, self.rle))
+            if self.depth in [1, 2, 4, 8]:
+                palette = bytes(sum(palette, []))
+                header.extend(palette)
+            len_header = len(header) + 2
+            header[6:6] = len_header.to_bytes(2, 'little')
+            return header
+
+        def depth1_2_4(self, palette):
+            """
+            Encodage pour les depth 1, 2 et 4 qui n'auront jamais de RLE.
+            """
+            bin_format = "0"
+            bin_format += str(self.depth) + "b"
+
+            pixel_bits = []
+            pixel_bytes = bytearray()
+            for pixel in self.image.pixels:
+                pixel_index = palette.index([pixel.red, pixel.green, pixel.blue])
+                pixel_bits.extend(format(pixel_index, bin_format))
+                if len(pixel_bits) >= 8:
+                    byte_to_write = pixel_bits[:8]
+                    pixel_bits = pixel_bits[8:]
+                    pixel_bytes.append(int(''.join(byte_to_write), 2))
+
+            # Si des bits restent à écrire à la fin
+            if pixel_bits:
+                remaining_bits_count = 8 - len(pixel_bits)
+                pixel_bits.extend('0' * remaining_bits_count)
+                pixel_bytes.append(int(''.join(pixel_bits), 2))
+            return pixel_bytes
+
+        def depth8(self, palette):
+            """
+            Encodage pour depth 8 avec ou sans RLE.
+            """
+            if not self.rle:
+                pixel_bits = []
+                pixel_bytes = bytearray()
+                for pixel in self.image.pixels:
+                    pixel_bits.extend(format(palette.index([pixel.red, pixel.green, pixel.blue]), '08b'))
+                    pixel_bytes.append(int(''.join(pixel_bits), 2))
+                    pixel_bits.clear()
+            else:
+                pixel_bytes = bytearray()
+                current_pixel = self.image.pixels[0]
+                same_pixel_count = 1
+                for next_pixel in self.image.pixels[1:]:
+                    if next_pixel == current_pixel and same_pixel_count < 255:
+                        same_pixel_count += 1
+                    else:
+                        pixel_index = palette.index([current_pixel.red, current_pixel.green, current_pixel.blue])
+                        pixel_bytes.extend([same_pixel_count, pixel_index])
+                        current_pixel = next_pixel
+                        same_pixel_count = 1
+                pixel_index = palette.index([current_pixel.red, current_pixel.green, current_pixel.blue])
+                pixel_bytes.extend([same_pixel_count, pixel_index])
+            return pixel_bytes
+
+        def depth24(self, file):
+            """
+            Encodage pour depth 24 avec au sans RLE. Comme c'est le même principe que la version 1 ou 2,
+            utilisation de la fonction d'encodage version2 pour RLE, sinon version1.
+            """
+            if self.rle:
+                self.version2(file)
+            else:
+                self.version1(file)
+
+        palette = palette(self)
+        header = updateHeader(self, header, palette)  # Ajout de la taille du header et de la palette
         with open(path, 'wb') as file:
             file.write(header)
             if self.depth == 24:
-                self.depth24(file)
+                depth24(self, file)
             else:
-                palette = self.palette()
                 if self.depth in [1, 2, 4]:
-                    pixel_bytes = self.depth1_2_4(palette)
+                    pixel_bytes = depth1_2_4(self, palette)
                 elif self.depth == 8:
-                    pixel_bytes = self.depth8(palette)
+                    pixel_bytes = depth8(self, palette)
                 file.write(pixel_bytes)
 
     def version4(self, file):
         pass
 
-    def palette(self):
-        """
-        Création de la plalette en fonction des différentes couleurs rencontrées dans l'image.
-        """
-        unique_colors = set()
-        for pixel in self.image.pixels:
-            unique_colors.add((pixel.red, pixel.green, pixel.blue))
-        return [list(color) for color in unique_colors]
-    
-    def updateHeader(self, header):
-        """
-        Ajout de la taille du header et de la palette dans le header.
-        """
-        header.extend((self.depth, self.rle))
-        if self.depth in [1, 2, 4, 8]:
-            palette = bytes(sum(self.palette(), []))
-            header.extend(palette)
-        len_header = len(header) + 2
-        header[6:6] = len_header.to_bytes(2, 'little')
-        return header
-    
-    def depth1_2_4(self, palette):
-        """
-        Encodage pour les depth 1, 2 et 4 qui n'auront jamais de RLE.
-        """
-        bin_format = "0"
-        bin_format += str(self.depth) + "b"
-        
-        pixel_bits = []
-        pixel_bytes = bytearray()
-        for pixel in self.image.pixels:
-            pixel_index = palette.index([pixel.red, pixel.green, pixel.blue])
-            pixel_bits.extend(format(pixel_index, bin_format))
-            if len(pixel_bits) >= 8:
-                byte_to_write = pixel_bits[:8]
-                pixel_bits = pixel_bits[8:]
-                pixel_bytes.append(int(''.join(byte_to_write), 2))
-                
-        # Si des bits restent à écrire à la fin
-        if pixel_bits:
-            remaining_bits_count = 8 - len(pixel_bits)
-            pixel_bits.extend('0' * remaining_bits_count)
-            pixel_bytes.append(int(''.join(pixel_bits), 2))
-        return pixel_bytes
-    
-    def depth8(self, palette):
-        """
-        Encodage pour depth 8 avec ou sans RLE.
-        """
-        if not self.rle:
-            pixel_bits = []
-            pixel_bytes = bytearray()
-            for pixel in self.image.pixels:
-                pixel_bits.extend(format(palette.index([pixel.red, pixel.green, pixel.blue]), '08b'))
-                pixel_bytes.append(int(''.join(pixel_bits), 2))
-                pixel_bits.clear()
-        else:
-            pixel_bytes = bytearray()
-            current_pixel = self.image.pixels[0]
-            same_pixel_count = 1
-            for next_pixel in self.image.pixels[1:]:
-                if next_pixel == current_pixel and same_pixel_count < 255:
-                    same_pixel_count += 1
-                else:
-                    pixel_index = palette.index([current_pixel.red, current_pixel.green, current_pixel.blue])
-                    pixel_bytes.extend([same_pixel_count, pixel_index])
-                    current_pixel = next_pixel
-                    same_pixel_count = 1
-            pixel_index = palette.index([current_pixel.red, current_pixel.green, current_pixel.blue])
-            pixel_bytes.extend([same_pixel_count, pixel_index])
-        return pixel_bytes
-    
-    def depth24(self, file):
-        """
-        Encodage pour depth 24 avec au sans RLE. Comme c'est le même principe que la version 1 ou 2,
-        utilisation de la fonction d'encodage version2 pour RLE, sinon version1.
-        """
-        if self.rle:
-            self.version2(file)
-        else:
-            self.version1(file)
-    
 
 class Decoder:
     def load_from(path):
@@ -415,6 +415,3 @@ class Decoder:
                 i, current_pixel = ULBMP_BIG_DIFF_B(pixels_bytes, pixels, i, current_pixel_bytes, current_pixel)
                 
         return pixels
-
-    
-    
