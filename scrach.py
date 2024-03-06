@@ -1,4 +1,7 @@
+nombre = 26  # Remplacez 42 par le nombre que vous souhaitez afficher en binaire
+nombre_binaire = format(nombre, '08b')  # '08b' spécifie que vous voulez un byte (8 bits) avec le remplissage de zéros à gauche si nécessaire
+
+print(nombre_binaire)
 
 
-decimal_val = bin(int.from_bytes(b'\xff', 'big'))[2:4] + bin(int.from_bytes(b'\xff', 'big'))[2:4]
-print(int(decimal_val, 2))
+print(bin(0x1a))
