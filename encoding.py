@@ -182,79 +182,70 @@ class Encoder:
                 file.write(pixel_bytes)
 
     def version4(self, file):
-        def ULBMP_SMALL_DIFF(file, Dr, Dg, Db, current_pixel, list_bytes):
-            nb_bin = "00" + format(Dr + 2, '02b') + format(Dg + 2, '02b') + format(Db + 2, '02b')
-            print(nb_bin)
-            list_bytes.append([nb_bin])
+        def ULBMP_SMALL_DIFF(file, Dr, Dg, Db):
+            nb_bin = int("00" + format(Dr + 2, '02b') + format(Dg + 2, '02b') + format(Db + 2, '02b'), 2)
+            file.write(bytes([nb_bin]))
 
         def ULBMP_INTERMEDIATE_DIFF(file, Dr, Dg, Db):
-            print("ULBMP_INTERMEDIATE_DIFF")
-            nb_bin1 = "01" + format(Dg + 32, '06b')
-            nb_bin2 = format(Dr - Dg + 8, '04b') + format(Db - Dg + 8, '04b')
-            byte1 = int(nb_bin1, 2).to_bytes(1, byteorder='big')
-            byte2 = int(nb_bin2, 2).to_bytes(1, byteorder='big')
-            file.write(byte1)
-            file.write(byte2)
+            nb_byte0 = int("01" + format(Dg + 32, '06b'), 2)
+            nb_byte1 = int(format(Dr - Dg + 8, '04b') + format(Db - Dg + 8, '04b'), 2)
+            file.write(bytes([nb_byte0, nb_byte1]))
 
         def ULBMP_BIG_DIFF_R(file, Dr, Dg, Db):
+            if Dr + 128 <= 0:
+                print("Dr : ", Dr)
+                print("Dr + 128 = ", Dr + 128)
             Dr_bin = format(Dr + 128, '08b')
+            if int(Dr_bin, 2) <= 2:
+                print("Dr_bin : ", Dr_bin)
             Dg_Dr_bin = format(Dg - Dr + 32, '06b')
-            nb_bin1 = "1000" + Dr_bin[:4]
-            nb_bin2 = Dr_bin[4:] + Dg_Dr_bin[:2]
-            nb_bin3 = Dg_Dr_bin[4:] + format(Db - Dr + 32, '06b')
-            byte1 = int(nb_bin1, 2).to_bytes(1, byteorder='big')
-            byte2 = int(nb_bin2, 2).to_bytes(1, byteorder='big')
-            byte3 = int(nb_bin3, 2).to_bytes(1, byteorder='big')
-            file.write(byte1)
-            file.write(byte2)
-            file.write(byte3)
+            nb_bin1 = int("1000" + Dr_bin[:4], 2)
+            nb_bin2 = int(Dr_bin[4:] + Dg_Dr_bin[:2], 2)
+            nb_bin3 = int(Dg_Dr_bin[4:] + format(Db - Dr + 32, '06b'), 2)
+            file.write(bytes([nb_bin1, nb_bin2, nb_bin3]))
+
+        def ULBMP_BIG_DIFF_G(file, Dr, Dg, Db):
+            Dg_bin = format(Dg + 128, '08b')
+            Dr_Dg_bin = format(Dr - Dg + 32, '06b')
+            nb_bin1 = int("1001" + Dg_bin[:4], 2)
+            nb_bin2 = int(Dg_bin[4:] + Dr_Dg_bin[:2], 2)
+            nb_bin3 = int(Dr_Dg_bin[4:] + format(Db - Dg + 32, '06b'), 2)
+            file.write(bytes([nb_bin1, nb_bin2, nb_bin3]))
+
+        def ULBMP_BIG_DIFF_B(file, Dr, Dg, Db):
+            Db_bin = format(Db + 128, '08b')
+            Dr_Db_bin = format(Dr - Db + 32, '06b')
+            nb_bin1 = int("1010" + Db_bin[:4], 2)
+            nb_bin2 = int(Db_bin[4:] + Dr_Db_bin[:2], 2)
+            nb_bin3 = int(Dr_Db_bin[4:] + format(Dg - Db + 32, '06b'), 2)
+            file.write(bytes([nb_bin1, nb_bin2, nb_bin3]))
+
+        def ULBMP_NEW_PIXEL(file, pixel):
+            file.write(bytes([255, pixel.red, pixel.green, pixel.blue]))
 
 
-        def ULBMP_BIG_DIFF_G():
-            pass
-
-        def ULBMP_BIG_DIFF_B():
-            pass
-
-        def ULBMP_NEW_PIXEL(file, pixel, list_bytes):
-            print("ULBMP_NEW_PIXEL")
-            bin1 = "11111111"
-            print(pixel.red)
-            bin2 = format(int(pixel.red), '08b')
-            print(bin2)
-            bin3 = format(int(pixel.green), '08b')
-            bin4 = format(int(pixel.blue), '08b')
-            bytes = bin1 + bin2 + bin3 + bin4
-            print(bytes)
-            list_bytes.append(bytes)
-            print("ok")
-
-        list_bytes = bytearray()
         current_pixel = Pixel(0, 0, 0)
         for pixel in self.image.pixels:
             Dr = pixel.red - current_pixel.red
             Dg = pixel.green - current_pixel.green
             Db = pixel.blue - current_pixel.blue
             if -2 <= Dr <= 1 and -2 <= Dg <= 1 and -2 <= Db <= 1:
-                ULBMP_SMALL_DIFF(file, Dr, Dg, Db, current_pixel, list_bytes)
+                ULBMP_SMALL_DIFF(file, Dr, Dg, Db)
             elif -32 <= Dg <= 31 and -8 <= (Dr - Dg) <= 7 and  -8 <= (Db - Dg) <= 7:
-                print(3)
                 ULBMP_INTERMEDIATE_DIFF(file, Dr, Dg, Db)
             elif -128 <= Dr <= 127 and -32 <= (Dg - Dr) <= 31 and -32 <= (Db - Dr) <= 31:
-                ULBMP_BIG_DIFF_R()
+                ULBMP_BIG_DIFF_R(file, Dr, Dg, Db)
             elif -128 <= Dg <= 127 and -32 <= (Dr - Dg) <= 31 and -32 <= (Db - Dg) <= 31:
-                ULBMP_BIG_DIFF_G()
+                ULBMP_BIG_DIFF_G(file, Dr, Dg, Db)
             elif -128 <= Db <= 127 and -32 <= (Dr - Db) <= 31 and -32 <= (Dg - Db) <= 31:
-                ULBMP_BIG_DIFF_B()
+                ULBMP_BIG_DIFF_B(file, Dr, Dg, Db)
             else:
-                ULBMP_NEW_PIXEL(file, pixel, list_bytes)
-            
+                ULBMP_NEW_PIXEL(file, pixel)
             current_pixel = pixel
-        print(list_bytes)
-        file.write(list_bytes)
 
 
 class Decoder:
+
     def load_from(path):
         """
         Charge l'image depuis son emplacement pour créer un objet Image qui contient des objets de type Pixel.
@@ -392,12 +383,14 @@ class Decoder:
     
     def version4(pixels_bytes, pixels, number_pixel):
         def ULBMP_NEW_PIXEL(pixels_bytes, pixels, i):
+            print("ULBMP_NEW_PIXEL")
             pixels.append(Pixel(pixels_bytes[i + 1], pixels_bytes[i + 2], pixels_bytes[i + 3]))
             i += 4
             current_pixel = pixels[-1]
             return i, current_pixel
 
         def ULBMP_SMALL_DIFF(pixels, i, current_pixel_bytes, current_pixel):
+            print("ULBMP_SMALL_DIFF")
             Dr = int(current_pixel_bytes[2:4], 2) - 2
             dgreen = int(current_pixel_bytes[4:6], 2) - 2
             dblue = int(current_pixel_bytes[6:], 2) - 2
@@ -410,6 +403,7 @@ class Decoder:
             return i, current_pixel
 
         def ULBMP_INTERMEDIATE_DIFF(pixels_bytes, pixels, i, current_pixel_bytes, current_pixel):
+            print("ULBMP_INTERMEDIATE_DIFF")
             second_bytes = format(pixels_bytes[i + 1], '08b')
             dgreen = int(current_pixel_bytes[2:], 2) - 32
             Dr_Dg = int(second_bytes[:4], 2) - 8
@@ -424,6 +418,7 @@ class Decoder:
 
 
         def ULBMP_BIG_DIFF_R(pixels_bytes, pixels, i, current_pixel_bytes, current_pixel):
+            print("ULBMP_BIG_DIFF_R")
             second_bytes = format(pixels_bytes[i + 1], '08b')
             last_byte = format(pixels_bytes[i + 2], '08b')
             Dr = int(current_pixel_bytes[4:] + second_bytes[:4], 2) - 128
@@ -432,12 +427,14 @@ class Decoder:
             red = Dr + current_pixel.red
             green = Dg_Dr + current_pixel.green + red - current_pixel.red
             blue = Db_Dr + current_pixel.blue + red - current_pixel.red
+            print("red : ", red, " green : ", green, " blue : ", blue)
             pixels.append(Pixel(red, green, blue))
             i += 3
             current_pixel = pixels[-1]
             return i, current_pixel
 
         def ULBMP_BIG_DIFF_G(pixels_bytes, pixels, i, current_pixel_bytes, current_pixel):
+            print("ULBMP_BIG_DIFF_G")
             second_bytes = format(pixels_bytes[i + 1], '08b')
             last_byte = format(pixels_bytes[i + 2], '08b')
             Dg = int(current_pixel_bytes[4:] + second_bytes[:4], 2) - 128
@@ -452,6 +449,7 @@ class Decoder:
             return i, current_pixel
 
         def ULBMP_BIG_DIFF_B(pixels_bytes, pixels, i, current_pixel_bytes, current_pixel):
+            print("ULBMP_BIG_DIFF_B")
             second_bytes = format(pixels_bytes[i + 1], '08b')
             last_byte = format(pixels_bytes[i + 2], '08b')
             Db = int(current_pixel_bytes[4:] + second_bytes[:4], 2) - 128
@@ -464,7 +462,6 @@ class Decoder:
             i += 3
             current_pixel = pixels[-1]
             return i, current_pixel
-
 
         current_pixel = Pixel(0, 0, 0)
         i = 0
@@ -482,7 +479,5 @@ class Decoder:
                 i, current_pixel = ULBMP_BIG_DIFF_G(pixels_bytes, pixels, i, current_pixel_bytes, current_pixel)
             elif current_pixel_bytes[0:4] == '1010':
                 i, current_pixel = ULBMP_BIG_DIFF_B(pixels_bytes, pixels, i, current_pixel_bytes, current_pixel)
-
-        print(pixels)
                 
         return pixels

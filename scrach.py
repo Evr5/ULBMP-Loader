@@ -1,9 +1,9 @@
-# Nombre que vous voulez écrire dans le fichier
-nombre = 255
+"""
+a = 0
+b = 1
+c = 2
 
-# Créer un objet bytearray contenant le nombre
-test = bytearray([nombre])
-test.append(255)
+print(bytes([a, b, c]))
+"""
 
-# Nom du fichier dans lequel vous souhaitez écrire
-print(test)
+print(bin(b'\x1a'))
