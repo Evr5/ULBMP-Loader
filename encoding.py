@@ -182,12 +182,13 @@ class Encoder:
                 file.write(pixel_bytes)
 
     def version4(self, file):
-        def ULBMP_SMALL_DIFF(file, Dr, Dg, Db):
+        def ULBMP_SMALL_DIFF(file, Dr, Dg, Db, current_pixel, list_bytes):
             nb_bin = "00" + format(Dr + 2, '02b') + format(Dg + 2, '02b') + format(Db + 2, '02b')
-            byte = int(nb_bin, 2).to_bytes(1, byteorder='big')
-            file.write(byte)
+            print(nb_bin)
+            list_bytes.append([nb_bin])
 
         def ULBMP_INTERMEDIATE_DIFF(file, Dr, Dg, Db):
+            print("ULBMP_INTERMEDIATE_DIFF")
             nb_bin1 = "01" + format(Dg + 32, '06b')
             nb_bin2 = format(Dr - Dg + 8, '04b') + format(Db - Dg + 8, '04b')
             byte1 = int(nb_bin1, 2).to_bytes(1, byteorder='big')
@@ -215,27 +216,42 @@ class Encoder:
         def ULBMP_BIG_DIFF_B():
             pass
 
-        def ULBMP_NEW_PIXEL(file, pixel):
-            file.write(bytes([pixel.red, pixel.green, pixel.blue]))
+        def ULBMP_NEW_PIXEL(file, pixel, list_bytes):
+            print("ULBMP_NEW_PIXEL")
+            bin1 = "11111111"
+            print(pixel.red)
+            bin2 = format(int(pixel.red), '08b')
+            print(bin2)
+            bin3 = format(int(pixel.green), '08b')
+            bin4 = format(int(pixel.blue), '08b')
+            bytes = bin1 + bin2 + bin3 + bin4
+            print(bytes)
+            list_bytes.append(bytes)
+            print("ok")
 
+        list_bytes = bytearray()
         current_pixel = Pixel(0, 0, 0)
         for pixel in self.image.pixels:
             Dr = pixel.red - current_pixel.red
             Dg = pixel.green - current_pixel.green
             Db = pixel.blue - current_pixel.blue
-            if -2 <= (Dr and Dg and Db) <= 1:
-                ULBMP_SMALL_DIFF(file, Dr, Dg, Db)
-            elif -32 <= Dg <= 31 and -8 <= (Dr - Dg and Db - Dg) <= 7:
+            if -2 <= Dr <= 1 and -2 <= Dg <= 1 and -2 <= Db <= 1:
+                ULBMP_SMALL_DIFF(file, Dr, Dg, Db, current_pixel, list_bytes)
+            elif -32 <= Dg <= 31 and -8 <= (Dr - Dg) <= 7 and  -8 <= (Db - Dg) <= 7:
+                print(3)
                 ULBMP_INTERMEDIATE_DIFF(file, Dr, Dg, Db)
-            elif -128 <= Dr <= 127 and -32 <= (Dg - Dr and Db - Dr) <= 31:
+            elif -128 <= Dr <= 127 and -32 <= (Dg - Dr) <= 31 and -32 <= (Db - Dr) <= 31:
                 ULBMP_BIG_DIFF_R()
-            elif -128 <= Dg <= 127 and -32 <= (Dr - Dg and Db - Dg) <= 31:
+            elif -128 <= Dg <= 127 and -32 <= (Dr - Dg) <= 31 and -32 <= (Db - Dg) <= 31:
                 ULBMP_BIG_DIFF_G()
-            elif -128 <= Db <= 127 and -32 <= (Dr - Db and Dg - Db) <= 31:
+            elif -128 <= Db <= 127 and -32 <= (Dr - Db) <= 31 and -32 <= (Dg - Db) <= 31:
                 ULBMP_BIG_DIFF_B()
             else:
-                ULBMP_NEW_PIXEL(file, pixel)
-    
+                ULBMP_NEW_PIXEL(file, pixel, list_bytes)
+            
+            current_pixel = pixel
+        print(list_bytes)
+        file.write(list_bytes)
 
 
 class Decoder:
@@ -466,5 +482,7 @@ class Decoder:
                 i, current_pixel = ULBMP_BIG_DIFF_G(pixels_bytes, pixels, i, current_pixel_bytes, current_pixel)
             elif current_pixel_bytes[0:4] == '1010':
                 i, current_pixel = ULBMP_BIG_DIFF_B(pixels_bytes, pixels, i, current_pixel_bytes, current_pixel)
+
+        print(pixels)
                 
         return pixels

@@ -110,7 +110,7 @@ class MainWindow(QMainWindow):
         """
         Demande à l'ulisateur où et dans quelle version il veut enregistrer l'image et l'enregistre.
         """
-        options = ["Version 1.0", "Version 2.0", "Version 3.0"]
+        options = ["Version 1.0", "Version 2.0", "Version 3.0", "Version 4.0"]
         version, ok = QInputDialog.getItem(self, "Sélectionner la version", "Choisir la version du format ULBMP:",
                                            options, 0, False)
         if ok:
@@ -144,6 +144,11 @@ class MainWindow(QMainWindow):
                 
                 else:
                     rle = 0
+            
+            elif version == "Version 4.0":
+                format = 4
+                depth = None
+                rle = None
 
             filename, _ = QFileDialog.getSaveFileName(self, 'Enregistrer l\'image ULBMP',
                                                       filter="ULBMP Files (*.ulbmp)")
