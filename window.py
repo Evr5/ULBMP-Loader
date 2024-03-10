@@ -34,7 +34,6 @@ class MainWindow(QMainWindow):
         buttons_layout.addWidget(self.load_button)
         buttons_layout.addWidget(self.save_button)
 
-
         layout = QVBoxLayout()
         layout.addLayout(buttons_layout)
         layout.addWidget(self.image_label)
@@ -44,21 +43,24 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
+        self.image = None
+
     def load_image(self):        
         """
         Demande à l'utilisateur l'image à charger et l'affiche dans la fenêtre.
         """ 
         file_dialog = QFileDialog()
-        filename, _ = file_dialog.getOpenFileName(self, 'Ouvrir une image ULBMP')
+        filename, _ = file_dialog.getOpenFileName(self, 'Ouvrir une image ULBMP')   # chargement du fichier
         start = time.time()
         if filename:
             try:
-                self.image = Decoder.load_from(filename)
-                self.save_button.setEnabled(True)
+                self.image = Decoder.load_from(filename)    # définition de l'image
+                self.save_button.setEnabled(True)   # image chargée donc on active le bouton de sauvegarde
                 pixmap = self.displayImage()
                 self.image_label.setPixmap(pixmap)
                 self.ajustWindowSize()
             except Exception as e:
+                # récupèrer le message d'erreur s'il y a une erreur lors du chargement de l'image
                 error_dialog = QErrorMessage()
                 error_dialog.showMessage(str(e))
                 error_dialog.exec()    
@@ -75,14 +77,12 @@ class MainWindow(QMainWindow):
 
         for y in range(self.image.height):
             for x in range(self.image.width):
-                pixel = self.image.pixels[y * self.image.width+ x]
                 pixel = self.image.pixels[y * self.image.width + x]
                 qcolor = QColor(pixel.red, pixel.green, pixel.blue)
                 qimage.setPixelColor(x, y, qcolor)
-                colors_set.add((qcolor.red(), qcolor.green(), qcolor.blue()))  # Ajouter la couleur à l'ensemble
+                colors_set.add((qcolor.red(), qcolor.green(), qcolor.blue()))
         # Le nombre de couleurs différentes est la longueur de l'ensemble
         number_of_colors = len(colors_set)
-
         # Afficher le nombre de couleurs dans un QLabel
         self.color_count_label.setText(f"Nombre de couleurs : {number_of_colors}")
 
@@ -96,15 +96,15 @@ class MainWindow(QMainWindow):
         Ajuste la taille de la fenêtre en fonction de la taille de l'image.
         """
         if self.image.width > 300 and self.image.height > 100: 
-            self.setFixedSize(self.image.width, self.image.height)
-        elif self.image.width <= 300 and self.image.height > 100:
-            self.setFixedSize(300, self.image.height)
+            self.setFixedSize(self.image.width, self.image.height + 100)  # ajoute 100 pour afficher entièrement l'image
+        elif self.image.width <= 300 and self.image.height > 100:   
+            self.setFixedSize(300, self.image.height + 100)  # ajoute 100 pour afficher entièrement l'image
         elif self.image.width > 300 and self.image.height <= 100:
             self.setFixedSize(self.image.width, 100)
-        else:   # si la taille de l'image est trop petite que pour que la taille de la fenêtre soit en fonction de la taille de l'image
+        else:
+            # si la taille de l'image est trop petite que pour que la taille de la fenêtre soit en fonction de la taille
+            # de l'image
             self.setFixedSize(300, 100)
-
-
 
     def save_image(self):
         """
@@ -133,25 +133,28 @@ class MainWindow(QMainWindow):
 
                 depth = int(depth)
                 
-                if depth in [8, 24]:
+                if depth in [8, 24]:    # demande l'encodage RLE seulement si la profondeur est 8 ou 24
 
                     rle, ok_rle = QInputDialog.getItem(self, "Utilisation de RLE", "Activer l'encodage RLE ?",
-                                                    ["Oui", "Non"], 0, False)
+                                                       ["Oui", "Non"], 0, False)
                     if not ok_rle:
                         return
 
-                    rle = 1 if rle == "Oui" else 0
+                    if rle == "Oui":
+                        rle = 1
+                    else:
+                        rle = 0
                 
                 else:
                     rle = 0
-            
+
             elif version == "Version 4.0":
                 format = 4
                 depth = None
                 rle = None
 
-            filename, _ = QFileDialog.getSaveFileName(self, 'Enregistrer l\'image ULBMP',
-                                                      filter="ULBMP Files (*.ulbmp)")
+            filename, _ = QFileDialog.getSaveFileName(self, 'Enregistrer l\'image ULBMP', filter="ULBMP Files "
+                                                                                                 "(*.ulbmp)")
             start = time.time()
             if filename:
                 try:

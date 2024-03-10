@@ -6,6 +6,7 @@ MATRICULE : 000589640
 """
 from pixel import Pixel
 
+
 class Image:
     def __init__(self, width, height, pixels):
         """
