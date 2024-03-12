@@ -6,4 +6,6 @@ c = 2
 print(bytes([a, b, c]))
 """
 
-print(bin(b'\x1a'))
+
+a = format(59, '08b')
+print(a)

@@ -204,15 +204,10 @@ class Encoder:
             bytes_pixel.extend([nb_byte0, nb_byte1])
 
         def ULBMP_BIG_DIFF_R(bytes_pixel, Dr, Dg, Db):
-            if Dr + 128 <= 0:
-                print("Dr : ", Dr)
-                print("Dr + 128 = ", Dr + 128)
             Dr_bin = format(Dr + 128, '08b')
-            if int(Dr_bin, 2) <= 2:
-                print("Dr_bin : ", Dr_bin)
             Dg_Dr_bin = format(Dg - Dr + 32, '06b')
             nb_bin1 = int("1000" + Dr_bin[:4], 2)
-            nb_bin2 = int(Dr_bin[4:] + Dg_Dr_bin[:2], 2)
+            nb_bin2 = int(Dr_bin[4:] + Dg_Dr_bin[:4], 2)
             nb_bin3 = int(Dg_Dr_bin[4:] + format(Db - Dr + 32, '06b'), 2)
             bytes_pixel.extend([nb_bin1, nb_bin2, nb_bin3])
 
@@ -220,7 +215,7 @@ class Encoder:
             Dg_bin = format(Dg + 128, '08b')
             Dr_Dg_bin = format(Dr - Dg + 32, '06b')
             nb_bin1 = int("1001" + Dg_bin[:4], 2)
-            nb_bin2 = int(Dg_bin[4:] + Dr_Dg_bin[:2], 2)
+            nb_bin2 = int(Dg_bin[4:] + Dr_Dg_bin[:4], 2)
             nb_bin3 = int(Dr_Dg_bin[4:] + format(Db - Dg + 32, '06b'), 2)
             bytes_pixel.extend([nb_bin1, nb_bin2, nb_bin3])
 
@@ -228,13 +223,12 @@ class Encoder:
             Db_bin = format(Db + 128, '08b')
             Dr_Db_bin = format(Dr - Db + 32, '06b')
             nb_bin1 = int("1010" + Db_bin[:4], 2)
-            nb_bin2 = int(Db_bin[4:] + Dr_Db_bin[:2], 2)
+            nb_bin2 = int(Db_bin[4:] + Dr_Db_bin[:4], 2)
             nb_bin3 = int(Dr_Db_bin[4:] + format(Dg - Db + 32, '06b'), 2)
             bytes_pixel.extend([nb_bin1, nb_bin2, nb_bin3])
 
         def ULBMP_NEW_PIXEL(bytes_pixel, pixel):
             bytes_pixel.extend([255, pixel.red, pixel.green, pixel.blue])
-
 
         current_pixel = Pixel(0, 0, 0)
         bytes_pixel = bytearray()
