@@ -254,6 +254,7 @@ class Encoder:
 
 
 class Decoder:
+    @staticmethod
     def load_from(path):
         """
         Charge l'image depuis son emplacement pour créer un objet Image qui contient des objets de type Pixel.
@@ -290,6 +291,7 @@ class Decoder:
         with open(path, 'rb') as file:
             return file.read()
 
+    @staticmethod
     def decode_pixels(version, header, pixels_bytes, number_pixel):
         """
         En fonction de la version, renvoie vers la fonction appropriée.

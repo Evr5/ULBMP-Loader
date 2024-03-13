@@ -19,7 +19,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         
         self.setWindowTitle("ULBMP Loader")
-        self.setWindowIcon(QIcon("icons/file.png"))
+        self.setWindowIcon(QIcon("file.png"))
 
         self.image_label = QLabel(self)
         self.load_button = QPushButton("Charger une image", self)
@@ -77,7 +77,7 @@ class MainWindow(QMainWindow):
 
         for y in range(self.image.height):
             for x in range(self.image.width):
-                pixel = self.image.pixels[y * self.image.width + x]
+                pixel = self.image[x, y]
                 qcolor = QColor(pixel.red, pixel.green, pixel.blue)
                 qimage.setPixelColor(x, y, qcolor)
                 colors_set.add((qcolor.red(), qcolor.green(), qcolor.blue()))
