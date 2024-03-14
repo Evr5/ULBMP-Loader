@@ -44,6 +44,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         self.image = None
+        self.number_colors = None
 
     def load_image(self):        
         """
@@ -55,10 +56,12 @@ class MainWindow(QMainWindow):
         if filename:
             try:
                 self.image = Decoder.load_from(filename)    # définition de l'image
-                self.save_button.setEnabled(True)   # image chargée donc on active le bouton de sauvegarde
                 pixmap = self.displayImage()
                 self.image_label.setPixmap(pixmap)
+                self.color_count_label.setText(f"Nombre de couleurs : {self.number_colors}")
                 self.ajustWindowSize()
+                self.save_button.setEnabled(True)   # image chargée donc on active le bouton de sauvegarde
+                
             except Exception as e:
                 # récupèrer le message d'erreur s'il y a une erreur lors du chargement de l'image
                 error_dialog = QErrorMessage()
@@ -82,9 +85,7 @@ class MainWindow(QMainWindow):
                 qimage.setPixelColor(x, y, qcolor)
                 colors_set.add((qcolor.red(), qcolor.green(), qcolor.blue()))
         # Le nombre de couleurs différentes est la longueur de l'ensemble
-        number_of_colors = len(colors_set)
-        # Afficher le nombre de couleurs dans un QLabel
-        self.color_count_label.setText(f"Nombre de couleurs : {number_of_colors}")
+        self.number_colors = len(colors_set)
 
         end = time.time()
         print(f"Temps d'affichage : {end - start} secondes")
@@ -124,7 +125,16 @@ class MainWindow(QMainWindow):
                 rle = None
             elif version == "Version 3.0":
                 format = 3
-                depth_options = [1, 2, 4, 8, 24]
+                if self.number_colors > 256:
+                    depth_options = [24]
+                elif self.number_colors > 16:
+                    depth_options = [8, 24]
+                elif self.number_colors > 4:
+                    depth_options = [4, 8, 24]
+                elif self.number_colors > 2:
+                    depth_options = [2, 4, 8, 24]
+                else:
+                    depth_options = [1, 2, 4, 8, 24]
                 depth, ok_depth = QInputDialog.getItem(self, "Sélectionner la profondeur",
                                                        "Choisir la profondeur de couleur:",
                                                        [str(d) for d in depth_options], 0, False)
@@ -166,5 +176,3 @@ class MainWindow(QMainWindow):
                     error_dialog.exec()
             end = time.time()
             print(f"Temps de download : {end - start} secondes")
-        else:
-            QMessageBox.information(self, "Annulation", "Vous avez annulé le choix de version du format ULBMP.")
