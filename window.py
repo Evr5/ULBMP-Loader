@@ -43,7 +43,6 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
-        self.image = None
         self.number_colors = None
 
     def load_image(self):        
