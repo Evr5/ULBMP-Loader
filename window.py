@@ -4,7 +4,7 @@ PRÉNOM : Ethan
 SECTION : B1-INF0
 MATRICULE : 000589640
 """
-from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QErrorMessage, QInputDialog, QMessageBox, \
+from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QErrorMessage, QInputDialog, \
     QVBoxLayout, QWidget, QHBoxLayout
 from PySide6.QtGui import QPixmap, QImage, QColor, QIcon
 from encoding import Encoder, Decoder
