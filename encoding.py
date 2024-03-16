@@ -19,6 +19,7 @@ class Encoder:
         rle = kwargs.get('rle')
         self.depth = depth
         self.rle = rle
+        self.bytes_pixel = bytearray()
         self.header = bytearray()
         self.palette = []
         self.checkError()
@@ -50,50 +51,47 @@ class Encoder:
         ])
 
         if self.version == 3:
-            bytes_pixel = self.version3()
+            self.version3()
         else:
             # Ajout de la taille du header dans le header
             self.header.insert(6, 0x0c)
             self.header.insert(7, 0x00)
             if self.version == 1:
-                bytes_pixel = self.version1()
+                self.version1()
             elif self.version == 2:
-                bytes_pixel = self.version2()
+                self.version2()
             else:
-                bytes_pixel = self.version4()
+                self.version4()
 
         with open(path, 'wb') as file:
             file.write(self.header)
-            file.write(bytes_pixel)
+            file.write(self.bytes_pixel)
 
     def version1(self):
         """
         Pour la version 1 de l'ULBMP, on ajoute 3 bytes (valeur Red, Green et Blue) pour chaque pixel à la liste
         bytes_pixel.
         """
-        bytes_pixel = bytearray()
         for pixel in self.image.pixels:
-            bytes_pixel.extend([pixel.red, pixel.green, pixel.blue])
-        return bytes_pixel
+            self.bytes_pixel.extend([pixel.red, pixel.green, pixel.blue])
+
 
     def version2(self):
         """
         Pour la version 2 de l'ULBMP, utilisation du RLE, on ajoute 2 bytes pour les mêmes pixels : 
         premier byte pour le nombre de pixels qu'il y a, le deuxième byte pour le pixel.
         """
-        bytes_pixel = bytearray()
         current_pixel = self.image.pixels[0]
         same_pixel = 1  # initialisation du nombre de mêmes pixels
         for next_pixel in self.image.pixels[1:]:
             if next_pixel == current_pixel and same_pixel < 255:
                 same_pixel += 1
             else:
-                bytes_pixel.extend([same_pixel, current_pixel.red, current_pixel.green, current_pixel.blue])
+                self.bytes_pixel.extend([same_pixel, current_pixel.red, current_pixel.green, current_pixel.blue])
                 current_pixel = next_pixel
                 same_pixel = 1
         # ajout des derniers pixels
-        bytes_pixel.extend([same_pixel, current_pixel.red, current_pixel.green, current_pixel.blue])
-        return bytes_pixel
+        self.bytes_pixel.extend([same_pixel, current_pixel.red, current_pixel.green, current_pixel.blue])
 
     def version3(self):
         """
@@ -129,20 +127,19 @@ class Encoder:
             # création du string du format attendu pour la valeur binaire de la profondeur
             depth_version = '0' + str(self.depth) + 'b'
             pixel_bits = []  # création de la liste de stockage des valeurs binaires de la profondeur
-            bytes_pixel = bytearray()
             for pixel in self.image.pixels:
                 pixel_index = self.palette.index([pixel.red, pixel.green, pixel.blue])
                 pixel_bits.extend(format(pixel_index, depth_version))
                 # Si la valeur contient 8 bits, on l'ajoute à la liste des bytes à écrire
                 if len(pixel_bits) == 8:
-                    bytes_pixel.append(int(''.join(pixel_bits), 2))
+                    self.bytes_pixel.append(int(''.join(pixel_bits), 2))
                     pixel_bits = []
             # S'il reste des bits
             if pixel_bits:
                 remaining_bits = 8 - len(pixel_bits)    # calcul du nombre de bits à rajouter
                 pixel_bits += ('0' * remaining_bits)    # complète le nombre binaire avec des 0
-                bytes_pixel.append(int(''.join(pixel_bits), 2))   
-            return bytes_pixel
+                self.bytes_pixel.append(int(''.join(pixel_bits), 2))   
+
 
         def depth8(self):
             """
@@ -150,13 +147,11 @@ class Encoder:
             """
             if not self.rle:
                 pixel_bits = []  # création de la liste de stockage des valeurs binaires de la profondeur
-                bytes_pixel = bytearray()
                 for pixel in self.image.pixels:
                     pixel_bits.extend(format(self.palette.index([pixel.red, pixel.green, pixel.blue]), '08b'))
-                    bytes_pixel.append(int(''.join(pixel_bits), 2))
+                    self.bytes_pixel.append(int(''.join(pixel_bits), 2))
                     pixel_bits = []
             else:
-                bytes_pixel = bytearray()
                 current_pixel = self.image.pixels[0]
                 same_pixel_count = 1
                 for next_pixel in self.image.pixels[1:]:
@@ -164,12 +159,11 @@ class Encoder:
                         same_pixel_count += 1
                     else:
                         pixel_index = self.palette.index([current_pixel.red, current_pixel.green, current_pixel.blue])
-                        bytes_pixel.extend([same_pixel_count, pixel_index])
+                        self.bytes_pixel.extend([same_pixel_count, pixel_index])
                         current_pixel = next_pixel
                         same_pixel_count = 1
                 pixel_index = self.palette.index([current_pixel.red, current_pixel.green, current_pixel.blue])
-                bytes_pixel.extend([same_pixel_count, pixel_index])
-            return bytes_pixel
+                self.bytes_pixel.extend([same_pixel_count, pixel_index])
 
         def depth24(self):
             """
@@ -177,80 +171,75 @@ class Encoder:
             utilisation de la fonction d'encodage version2 pour RLE, sinon version1.
             """
             if self.rle:
-                bytes_pixel = self.version2()   # même méthode que pour version 2
+                self.version2()   # même méthode que pour version 2
             else:
-                bytes_pixel = self.version1()   # même méthode que pour version 1
-            return bytes_pixel
+                self.version1()   # même méthode que pour version 1
 
         palette(self)   # Création de la plalette
         updateHeader(self)  # Ajout de la taille du header et de la palette
         if self.depth == 24:
-            bytes_pixel = depth24(self)
+            depth24(self)
         else:
             if self.depth in [1, 2, 4]:
-                bytes_pixel = depth1_2_4(self)
+                depth1_2_4(self)
             elif self.depth == 8:
-                bytes_pixel = depth8(self)
-        return bytes_pixel 
+                depth8(self)
 
     def version4(self):
-        def ULBMP_SMALL_DIFF(bytes_pixel, Dr, Dg, Db):
+        def ULBMP_SMALL_DIFF(Dr, Dg, Db):
             nb_bin = int("00" + format(Dr + 2, '02b') + format(Dg + 2, '02b') + format(Db + 2, '02b'), 2)
-            bytes_pixel.extend([nb_bin])
+            self.bytes_pixel.extend([nb_bin])
 
-        def ULBMP_INTERMEDIATE_DIFF(bytes_pixel, Dr, Dg, Db):
+        def ULBMP_INTERMEDIATE_DIFF(Dr, Dg, Db):
             nb_byte0 = int("01" + format(Dg + 32, '06b'), 2)
             nb_byte1 = int(format(Dr - Dg + 8, '04b') + format(Db - Dg + 8, '04b'), 2)
-            bytes_pixel.extend([nb_byte0, nb_byte1])
+            self.bytes_pixel.extend([nb_byte0, nb_byte1])
 
-        def ULBMP_BIG_DIFF_R(bytes_pixel, Dr, Dg, Db):
+        def ULBMP_BIG_DIFF_R(Dr, Dg, Db):
             Dr_bin = format(Dr + 128, '08b')
             Dg_Dr_bin = format(Dg - Dr + 32, '06b')
             nb_bin1 = int("1000" + Dr_bin[:4], 2)
             nb_bin2 = int(Dr_bin[4:] + Dg_Dr_bin[:4], 2)
             nb_bin3 = int(Dg_Dr_bin[4:] + format(Db - Dr + 32, '06b'), 2)
-            bytes_pixel.extend([nb_bin1, nb_bin2, nb_bin3])
+            self.bytes_pixel.extend([nb_bin1, nb_bin2, nb_bin3])
 
-        def ULBMP_BIG_DIFF_G(bytes_pixel, Dr, Dg, Db):
+        def ULBMP_BIG_DIFF_G(Dr, Dg, Db):
             Dg_bin = format(Dg + 128, '08b')
             Dr_Dg_bin = format(Dr - Dg + 32, '06b')
             nb_bin1 = int("1001" + Dg_bin[:4], 2)
             nb_bin2 = int(Dg_bin[4:] + Dr_Dg_bin[:4], 2)
             nb_bin3 = int(Dr_Dg_bin[4:] + format(Db - Dg + 32, '06b'), 2)
-            bytes_pixel.extend([nb_bin1, nb_bin2, nb_bin3])
+            self.bytes_pixel.extend([nb_bin1, nb_bin2, nb_bin3])
 
-        def ULBMP_BIG_DIFF_B(bytes_pixel, Dr, Dg, Db):
+        def ULBMP_BIG_DIFF_B(Dr, Dg, Db):
             Db_bin = format(Db + 128, '08b')
             Dr_Db_bin = format(Dr - Db + 32, '06b')
             nb_bin1 = int("1010" + Db_bin[:4], 2)
             nb_bin2 = int(Db_bin[4:] + Dr_Db_bin[:4], 2)
             nb_bin3 = int(Dr_Db_bin[4:] + format(Dg - Db + 32, '06b'), 2)
-            bytes_pixel.extend([nb_bin1, nb_bin2, nb_bin3])
+            self.bytes_pixel.extend([nb_bin1, nb_bin2, nb_bin3])
 
-        def ULBMP_NEW_PIXEL(bytes_pixel, pixel):
-            bytes_pixel.extend([255, pixel.red, pixel.green, pixel.blue])
+        def ULBMP_NEW_PIXEL(pixel):
+            self.bytes_pixel.extend([255, pixel.red, pixel.green, pixel.blue])
 
         current_pixel = Pixel(0, 0, 0)
-        bytes_pixel = bytearray()
         for pixel in self.image.pixels:
             Dr = pixel.red - current_pixel.red
             Dg = pixel.green - current_pixel.green
             Db = pixel.blue - current_pixel.blue
             if -2 <= Dr <= 1 and -2 <= Dg <= 1 and -2 <= Db <= 1:
-                ULBMP_SMALL_DIFF(bytes_pixel, Dr, Dg, Db)
+                ULBMP_SMALL_DIFF(Dr, Dg, Db)
             elif -32 <= Dg <= 31 and -8 <= (Dr - Dg) <= 7 and  -8 <= (Db - Dg) <= 7:
-                ULBMP_INTERMEDIATE_DIFF(bytes_pixel, Dr, Dg, Db)
+                ULBMP_INTERMEDIATE_DIFF(Dr, Dg, Db)
             elif -128 <= Dr <= 127 and -32 <= (Dg - Dr) <= 31 and -32 <= (Db - Dr) <= 31:
-                ULBMP_BIG_DIFF_R(bytes_pixel, Dr, Dg, Db)
+                ULBMP_BIG_DIFF_R(Dr, Dg, Db)
             elif -128 <= Dg <= 127 and -32 <= (Dr - Dg) <= 31 and -32 <= (Db - Dg) <= 31:
-                ULBMP_BIG_DIFF_G(bytes_pixel, Dr, Dg, Db)
+                ULBMP_BIG_DIFF_G(Dr, Dg, Db)
             elif -128 <= Db <= 127 and -32 <= (Dr - Db) <= 31 and -32 <= (Dg - Db) <= 31:
-                ULBMP_BIG_DIFF_B(bytes_pixel, Dr, Dg, Db)
+                ULBMP_BIG_DIFF_B(Dr, Dg, Db)
             else:
-                ULBMP_NEW_PIXEL(bytes_pixel, pixel)
+                ULBMP_NEW_PIXEL(pixel)
             current_pixel = pixel
-        
-        return bytes_pixel
 
 
 class Decoder:
