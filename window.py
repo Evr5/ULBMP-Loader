@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         
         self.setWindowTitle("ULBMP Loader")
-        self.setWindowIcon(QIcon("file.png"))
+        self.setWindowIcon(QIcon("logoULB.png"))
 
         self.image_label = QLabel(self)
         self.load_button = QPushButton("Charger une image", self)
