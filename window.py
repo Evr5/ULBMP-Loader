@@ -8,7 +8,6 @@ from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QFileDialog, QEr
     QVBoxLayout, QWidget, QHBoxLayout
 from PySide6.QtGui import QPixmap, QImage, QColor, QIcon
 from encoding import Encoder, Decoder
-import time
 
 
 class MainWindow(QMainWindow):
@@ -51,7 +50,6 @@ class MainWindow(QMainWindow):
         """ 
         file_dialog = QFileDialog()
         filename, _ = file_dialog.getOpenFileName(self, 'Ouvrir une image ULBMP')   # chargement du fichier
-        start = time.time()
         if filename:
             try:
                 self.image = Decoder.load_from(filename)    # définition de l'image
@@ -62,18 +60,15 @@ class MainWindow(QMainWindow):
                 self.save_button.setEnabled(True)   # image chargée donc on active le bouton de sauvegarde
                 
             except Exception as e:
-                # récupèrer le message d'erreur s'il y a une erreur lors du chargement de l'image
+                # récupère le message d'erreur s'il y a une erreur
                 error_dialog = QErrorMessage()
                 error_dialog.showMessage(str(e))
                 error_dialog.exec()    
-        end = time.time()
-        print(f"Temps d'upload' : {end - start} secondes")
         
     def displayImage(self):
         """
         Affiche l'image dans la fenêtre.
         """
-        start = time.time()
         qimage = QImage(self.image.width, self.image.height, QImage.Format_RGB888)
         colors_set = set()  # Ensemble pour stocker les couleurs uniques
 
@@ -85,10 +80,6 @@ class MainWindow(QMainWindow):
                 colors_set.add((qcolor.red(), qcolor.green(), qcolor.blue()))
         # Le nombre de couleurs différentes est la longueur de l'ensemble
         self.number_colors = len(colors_set)
-
-        end = time.time()
-        print(f"Temps d'affichage : {end - start} secondes")
-
         return QPixmap.fromImage(qimage)
     
     def ajustWindowSize(self):
@@ -164,7 +155,6 @@ class MainWindow(QMainWindow):
 
             filename, _ = QFileDialog.getSaveFileName(self, 'Enregistrer l\'image ULBMP', filter="ULBMP Files "
                                                                                                  "(*.ulbmp)")
-            start = time.time()
             if filename:
                 try:
                     encoder = Encoder(self.image, format, depth=depth, rle=rle)
@@ -173,5 +163,3 @@ class MainWindow(QMainWindow):
                     error_dialog = QErrorMessage()
                     error_dialog.showMessage(str(e))
                     error_dialog.exec()
-            end = time.time()
-            print(f"Temps de download : {end - start} secondes")
