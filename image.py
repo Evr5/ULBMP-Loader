@@ -21,6 +21,7 @@ class Image:
         for pixel in pixels:
             if not isinstance(pixel, Pixel):
                 raise ValueError("Le contenu de la liste pixels doit être des objets Pixel")
+            
         self.width = width
         self.height = height
         self.pixels = pixels
@@ -30,7 +31,6 @@ class Image:
         Affiche la classe avec la largeur, hauteur et le contenu de la liste pixel
         """
         repr = ""
-        # Ajouter les pixels à l'endroit où ils se trouvent dans l'image
         for y in range(self.height):
             for x in range(self.width):
                 repr += str(self[x, y]) + " "
@@ -38,18 +38,30 @@ class Image:
         return repr
 
     def __getitem__(self, pos):
+        """
+        Surcharge l’opérateur [] en lecture
+        """
         x, y = pos
+        #  si pos n’est pas une position valide dans l’image
         if not (0 <= x < self.width) or not (0 <= y < self.height):
             raise IndexError("Position hors limite")
         return self.pixels[y * self.width + x]
 
     def __setitem__(self, pos, pix):
+        """
+        Surcharge l’opérateur [] en écriture
+        """
         x, y = pos
+        # si pos n’est pas une position valide dans l’image
         if not (0 <= x < self.width) or not (0 <= y < self.height):
             raise IndexError("Position hors limite")
         self.pixels[y * self.width + x] = pix
 
     def __eq__(self, other):
+        """
+        Surcharge l’opérateur d'égalité
+
+        """
         if not isinstance(other, Image):
             res = False
         else:
