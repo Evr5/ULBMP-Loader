@@ -30,12 +30,12 @@ class Image:
         """
         Affiche la classe avec la largeur, hauteur et le contenu de la liste pixel
         """
-        repr = ""
+        show = ""
         for y in range(self.height):
             for x in range(self.width):
-                repr += str(self[x, y]) + " "
-            repr += "\n"
-        return repr
+                show += str(self[x, y]) + " "
+            show += "\n"
+        return show
 
     def __getitem__(self, pos):
         """
