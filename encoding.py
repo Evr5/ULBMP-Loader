@@ -15,10 +15,8 @@ class Encoder:
         """
         self.image = img
         self.version = version
-        depth = kwargs.get('depth')
-        rle = kwargs.get('rle')
-        self.depth = depth
-        self.rle = rle
+        self.depth = kwargs.get('depth')
+        self.rle = kwargs.get('rle')
         self.bytes_pixel = bytearray()
         self.header = bytearray()
         self.palette = []
@@ -97,7 +95,7 @@ class Encoder:
         """
         Pour la version 3 de l'ULBMP, encodage spécifique au depth et RLE spécifié.
         """
-        def palette(self):
+        def paletteCreation(self):
             """
             Création de la plalette en fonction des différentes couleurs rencontrées dans l'image.
             """
@@ -124,16 +122,16 @@ class Encoder:
             """
             Encodage pour les depth 1, 2 et 4 qui n'auront jamais de RLE.
             """
-            # création du string du format attendu pour la valeur binaire de la profondeur
+            # création du string du format pour la valeur de la profondeur
             depth_version = '0' + str(self.depth) + 'b'
-            pixel_bits = []  # création de la liste de stockage des valeurs binaires de la profondeur
+            pixel_bits = []  # création de la liste de stockage des valeurs de la profondeur
             for pixel in self.image.pixels:
                 pixel_index = self.palette.index([pixel.red, pixel.green, pixel.blue])
                 pixel_bits.extend(format(pixel_index, depth_version))
                 # Si la valeur contient 8 bits, on l'ajoute à la liste des bytes à écrire
                 if len(pixel_bits) == 8:
                     self.bytes_pixel.append(int(''.join(pixel_bits), 2))
-                    pixel_bits = []
+                    pixel_bits = [] # on vide la liste de stockage de la profondeur
             # S'il reste des bits
             if pixel_bits:
                 remaining_bits = 8 - len(pixel_bits)    # calcul du nombre de bits à rajouter
@@ -146,20 +144,20 @@ class Encoder:
             Encodage pour depth 8 avec ou sans RLE.
             """
             if not self.rle:
-                pixel_bits = []  # création de la liste de stockage des valeurs binaires de la profondeur
+                pixel_bits = []  # création de la liste de stockage des valeurs de la profondeur
                 for pixel in self.image.pixels:
                     pixel_bits.extend(format(self.palette.index([pixel.red, pixel.green, pixel.blue]), '08b'))
                     self.bytes_pixel.append(int(''.join(pixel_bits), 2))
-                    pixel_bits = []
+                    pixel_bits = [] # on vide la liste de stockage de la profondeur
             else:
                 current_pixel = self.image.pixels[0]
-                same_pixel_count = 1
+                same_pixel = 1
                 for next_pixel in self.image.pixels[1:]:
-                    if next_pixel == current_pixel and same_pixel_count < 255:
-                        same_pixel_count += 1
+                    if next_pixel == current_pixel and same_pixel < 255:
+                        same_pixel += 1
                     else:
                         pixel_index = self.palette.index([current_pixel.red, current_pixel.green, current_pixel.blue])
-                        self.bytes_pixel.extend([same_pixel_count, pixel_index])
+                        self.bytes_pixel.extend([same_pixel, pixel_index])
                         current_pixel = next_pixel
                         same_pixel_count = 1
                 pixel_index = self.palette.index([current_pixel.red, current_pixel.green, current_pixel.blue])
@@ -175,27 +173,38 @@ class Encoder:
             else:
                 self.version1()   # même méthode que pour version 1
 
-        palette(self)   # Création de la plalette
+        paletteCreation(self)   # Création de la plalette
         updateHeader(self)  # Ajout de la taille du header et de la palette
         if self.depth == 24:
             depth24(self)
+        elif self.depth == 8:
+            depth8(self)
         else:
-            if self.depth in [1, 2, 4]:
-                depth1_2_4(self)
-            elif self.depth == 8:
-                depth8(self)
+            depth1_2_4(self)
 
     def version4(self):
+        """
+        Pour la version 3 de l'ULBMP, encodage inspiré du format QOI (Quite Ok Image).
+        """
         def ULBMP_SMALL_DIFF(Dr, Dg, Db):
+            """
+            Pour une small diff, on ajoute le byte de reconnaissance '00', Dr, Dg et Db.
+            """
             nb_bin = int("00" + format(Dr + 2, '02b') + format(Dg + 2, '02b') + format(Db + 2, '02b'), 2)
             self.bytes_pixel.extend([nb_bin])
 
         def ULBMP_INTERMEDIATE_DIFF(Dr, Dg, Db):
+            """
+            Pour un intermediate diff, on ajoute le byte de reconnaissance '01', Dg, Dr - Dg et Db - Dg.
+            """
             nb_byte0 = int("01" + format(Dg + 32, '06b'), 2)
             nb_byte1 = int(format(Dr - Dg + 8, '04b') + format(Db - Dg + 8, '04b'), 2)
             self.bytes_pixel.extend([nb_byte0, nb_byte1])
 
         def ULBMP_BIG_DIFF_R(Dr, Dg, Db):
+            """
+            Pour une big diff R, on ajoute le byte de reconnaissance '1000', Dr, Dg - Dr et Db - Dr.
+            """
             Dr_bin = format(Dr + 128, '08b')
             Dg_Dr_bin = format(Dg - Dr + 32, '06b')
             nb_bin1 = int("1000" + Dr_bin[:4], 2)
@@ -204,6 +213,9 @@ class Encoder:
             self.bytes_pixel.extend([nb_bin1, nb_bin2, nb_bin3])
 
         def ULBMP_BIG_DIFF_G(Dr, Dg, Db):
+            """
+            Pour une big diff G, on ajoute le byte de reconnaissance '1001', Dg, Dr - Dg et Db - Dg.
+            """
             Dg_bin = format(Dg + 128, '08b')
             Dr_Dg_bin = format(Dr - Dg + 32, '06b')
             nb_bin1 = int("1001" + Dg_bin[:4], 2)
@@ -212,6 +224,9 @@ class Encoder:
             self.bytes_pixel.extend([nb_bin1, nb_bin2, nb_bin3])
 
         def ULBMP_BIG_DIFF_B(Dr, Dg, Db):
+            """
+            Pour une big diff B, on ajoute le byte de reconnaissance '1010', Db, Dr - Db et Dg - Db.
+            """
             Db_bin = format(Db + 128, '08b')
             Dr_Db_bin = format(Dr - Db + 32, '06b')
             nb_bin1 = int("1010" + Db_bin[:4], 2)
@@ -220,9 +235,12 @@ class Encoder:
             self.bytes_pixel.extend([nb_bin1, nb_bin2, nb_bin3])
 
         def ULBMP_NEW_PIXEL(pixel):
+            """
+            Pour un nouveau pixel, on ajoute le byte de reconnaissance '11111111', le rouge, le vert et le bleu.
+            """
             self.bytes_pixel.extend([255, pixel.red, pixel.green, pixel.blue])
 
-        current_pixel = Pixel(0, 0, 0)
+        current_pixel = Pixel(0, 0, 0) # pixel par défaut est le pixel noir
         for pixel in self.image.pixels:
             Dr = pixel.red - current_pixel.red
             Dg = pixel.green - current_pixel.green
@@ -239,7 +257,7 @@ class Encoder:
                 ULBMP_BIG_DIFF_B(Dr, Dg, Db)
             else:
                 ULBMP_NEW_PIXEL(pixel)
-            current_pixel = pixel
+            current_pixel = pixel   # le pixel suivant devient le current pixel 
 
 
 class Decoder:
@@ -378,6 +396,9 @@ class Decoder:
         return pixels
     
     def version4(pixels_bytes, pixels, number_pixel):
+        """
+        Ajoute à la liste pixels chaques objets Pixel avec le principe du format QOI (Quite Ok Image).
+        """
         def ULBMP_NEW_PIXEL(pixels_bytes, pixels, i):
             pixels.append(Pixel(pixels_bytes[i + 1], pixels_bytes[i + 2], pixels_bytes[i + 3]))
             i += 4
@@ -452,9 +473,9 @@ class Decoder:
             current_pixel = pixels[-1]
             return i, current_pixel
 
-        current_pixel = Pixel(0, 0, 0)
+        current_pixel = Pixel(0, 0, 0)  # pixel par défaut est le pixel noir
         i = 0
-        while len(pixels) != number_pixel:
+        while len(pixels) != number_pixel:  # tant qu'on a pas traité tous les pixels
             current_pixel_bytes = format(pixels_bytes[i], '08b')
             if current_pixel_bytes == '11111111':
                 i, current_pixel = ULBMP_NEW_PIXEL(pixels_bytes, pixels, i)
