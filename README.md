@@ -10,7 +10,7 @@ Ce projet est une application de chargement et de sauvegarde d'images au format 
 
     ```bash
     git clone https://github.com/Evr5/ULBMP-Loader.git
-    cd projet2
+    cd ULBMP-Loader
     ```
 
 2. Installez les dépendances requises :
