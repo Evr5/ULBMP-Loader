@@ -9,7 +9,7 @@ Ce projet est une application de chargement et de sauvegarde d'images au format 
 1. Clonez le dépôt :
 
     ```bash
-    git clone git@github.com:Evr5/projet2.git
+    git clone https://github.com/Evr5/ULBMP-Loader.git
     cd projet2
     ```
 
